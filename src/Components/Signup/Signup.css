@@ -1,0 +1,93 @@
+.form-container {
+    max-width: 500px;
+    min-width: 300px;
+    margin: 40px auto;
+    padding: 20px;
+    background-color: #f9f9f9;
+    box-shadow: 0 0 12px rgba(0, 0, 0, 0.1);
+    border-radius: 10px;
+    width: 30%;
+    padding-block: 2rem;
+  }
+  
+  .signuploginconainter {
+    width: 100%;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  
+  .form-container h2 {
+    text-align: center;
+    margin-bottom: 20px;
+    color: #333;
+    margin-top: 0;
+  }
+  
+  .authtext {
+    width: 100%;
+    padding: 15px;
+    margin: 15px 0;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 16px;
+    background-color: #fff;
+    box-sizing: border-box;
+  }
+  
+  .auth-button {
+    width: 100%;
+    padding: 15px;
+    background-color: #175B42;
+    border: none;
+    color: white;
+    font-size: 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    margin-top: 12px;
+  }
+  
+  .auth-button:hover {
+    background-color: #175B42;
+  }
+  
+  .toggle-text {
+    text-align: center;
+    margin-top: 15px;
+    font-size: 14px;
+  }
+  
+  .toggle-link {
+    color: #007bff;
+    cursor: pointer;
+    font-weight: 500;
+  }
+  
+  .toggle-link:hover {
+    text-decoration: underline;
+  }
+  
+  .password-wrapper {
+    position: relative;
+    width: 100%;
+  }
+  
+  .toggle-password {
+    position: absolute;
+    top: 50%;
+    right: 10px;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: #175B42;
+    cursor: pointer;
+    font-size: 14px;
+  }
+  .error-text {
+    color: red;
+    font-size: 0.8rem;
+    margin-top: 4px;
+    display: block;
+  }
+  

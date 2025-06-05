@@ -1,0 +1,263 @@
+.dashboard{
+    margin: 0.5rem;
+    padding: 20px;
+    box-shadow: 0 0 8px rgba(0, 0, 0, 0.2);
+}
+
+.user-section, .batch-section {
+    margin-top: 1rem;
+    padding: 1rem;
+    box-shadow: 0 0 8px rgba(0, 0, 0, 0.1);
+}
+
+.user-section-heading,
+.batch-section-heading {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.user-searchbox,
+.batch-searchbox {
+    padding: 6px 10px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    margin-right: 10px;
+    font-size: 14px;
+    max-width: 200px;
+}
+
+.search-container {
+    margin-bottom: 20px;
+}
+
+.search-input {
+    width: 100%;
+    max-width: 300px;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 14px;
+    transition: border-color 0.3s ease;
+}
+
+.search-input:focus {
+    outline: none;
+    border-color: #007bff;
+    box-shadow: 0 0 0 2px rgba(0,123,255,0.25);
+}
+
+.user-list {
+    overflow-x: auto;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+
+th, td {
+    padding: 12px;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+}
+
+th {
+    background-color: #f8f9fa;
+    font-weight: 600;
+}
+
+.create-user-btn {
+    padding: 10px 20px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.create-user-btn:hover {
+    background-color: #0056b3;
+}
+
+.edit-btn, .delete-btn {
+    padding: 6px 12px;
+    margin: 0 4px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.edit-btn {
+    background-color: #28a745;
+    color: white;
+}
+
+.edit-btn:hover {
+    background-color: #218838;
+}
+
+.delete-btn {
+    background-color: #dc3545;
+    color: white;
+}
+
+.delete-btn:hover {
+    background-color: #c82333;
+}
+
+.loading {
+    text-align: center;
+    padding: 20px;
+    color: #666;
+}
+
+.user-table{
+    width: 100%;
+    text-align: left;
+    margin-top: 1rem;
+    >thead{
+        >tr{
+        border-bottom: 1px solid #ddd;
+
+            >th{
+                padding: 0.25rem;
+            }
+        }
+        
+    }
+
+    >tbody{
+        .user-table-row{
+        border-bottom: 1px solid #ddd;
+
+            >td{
+                padding: 8px 4px;
+            }
+        }
+        
+    }
+}
+
+.user-table-row{
+    >td{
+        border-bottom: 1px solid #ddd;
+    }
+}
+
+.batch-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+
+.batch-table th,
+.batch-table td {
+    padding: 12px;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+}
+
+.batch-table th {
+    background-color: #f8f9fa;
+    font-weight: 600;
+}
+
+.status-btn {
+    padding: 6px 12px;
+    border: none;
+    border-radius: 4px;
+    font-weight: 500;
+    cursor: pointer;
+    text-transform: capitalize;
+}
+
+.status-btn.pending {
+    background-color: #ffd700;
+    color: #000;
+}
+
+.status-btn.approved {
+    background-color: #28a745;
+    color: white;
+}
+
+.status-btn.rejected {
+    background-color: #dc3545;
+    color: white;
+}
+
+.batch-searchbox {
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    margin-right: 10px;
+    width: 250px;
+}
+
+.batch-section {
+    margin-bottom: 30px;
+}
+
+.batch-section-heading {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.approval-status-icon{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.approval-icon{
+    width: 2.5rem;
+    height: 2.5rem;
+    margin-left: -1.5rem;
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.payinfo-button {
+  background-color: #007BFF; /* Bootstrap primary blue */
+  color: white;
+  padding: 6px 12px;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.3s ease, box-shadow 0.2s ease;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+/* Hover and focus effects */
+.payinfo-button:hover,
+.payinfo-button:focus {
+  background-color: #0056b3;
+  outline: none;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+}
+
+/* Disabled state */
+.payinfo-button:disabled {
+  background-color: #cccccc;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.info-icon {
+  width: 24px;
+  height: 24px;
+  transition: opacity 0.3s;
+  cursor: pointer;
+}
+
+.info-icon:hover {
+  opacity: 0.8;
+}

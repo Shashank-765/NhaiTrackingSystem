@@ -1,0 +1,24 @@
+.contractor-dashboard{
+    margin: 0.5rem;
+    padding: 20px;
+    box-shadow: 0 0 8px rgba(0, 0, 0, 0.2);
+}
+
+.invoice-icon{
+    width: 2rem;
+    height: 2rem;
+    margin-left: 1rem;
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+.info-icon {
+  width: 24px;
+  height: 24px;
+  transition: opacity 0.3s;
+  cursor: pointer;
+}
+
+.info-icon:hover {
+  opacity: 0.8;
+}

@@ -1,0 +1,26 @@
+.user-form, .batch-form{
+    background: white;
+    padding: 2rem;
+    border-radius: 6px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    width: 100%;
+    max-width: 500px;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.user-form input,
+.user-form select,
+.batch-form input,
+.batch-form select{
+    padding: 0.5rem;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+}
+
+.button-div{
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+}

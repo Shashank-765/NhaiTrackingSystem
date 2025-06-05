@@ -1,0 +1,71 @@
+.notfound-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    padding: 20px;
+    background: #d1e3d7;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  }
+  
+  .notfound-box {
+    text-align: center;
+    background: #ffffff;
+    padding: 50px 30px;
+    border-radius: 12px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+    animation: slideFade 0.6s ease-in-out;
+    max-width: 500px;
+    width: 100%;
+  }
+  
+  .notfound-box h1 {
+    font-size: 120px;
+    margin: 0;
+    color: #1d6f42;
+    font-weight: bold;
+  }
+  
+  .notfound-box p {
+    font-size: 18px;
+    margin: 20px 0;
+    color: #555;
+  }
+  
+  .back-home-btn {
+    display: inline-block;
+    padding: 12px 28px;
+    font-size: 16px;
+    background-color: #1d6f42;
+    color: white;
+    text-decoration: none;
+    border-radius: 6px;
+    transition: background-color 0.3s ease;
+  }
+  
+  @media (max-width: 600px) {
+    .notfound-box h1 {
+      font-size: 80px;
+    }
+  
+    .notfound-box p {
+      font-size: 16px;
+    }
+  
+    .back-home-btn {
+      font-size: 14px;
+      padding: 10px 20px;
+    }
+  }
+  
+  @keyframes slideFade {
+    from {
+      opacity: 0;
+      transform: translateY(40px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  

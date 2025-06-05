@@ -1,0 +1,32 @@
+.contractor-batch-edit-form{
+    max-width: 450px;
+    width: 100%;
+    padding: 1rem;
+    border-radius: 6px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    background: #fff;
+    display: flex;
+    flex-direction: column;
+    justify-content: center ;
+    align-items: left;
+    gap: 1rem;
+
+    >h2{
+        text-align: center;
+    }
+}
+
+.contractor-batch-edit-form .form-group{
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+
+    >input,
+    >textarea,
+    >select{
+        padding: 0.5rem;
+        border-radius: 6px;
+        border: 1px solid #ccc;
+        resize: vertical;
+    }
+}
