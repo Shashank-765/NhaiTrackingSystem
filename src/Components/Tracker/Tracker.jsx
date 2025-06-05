@@ -126,7 +126,6 @@ const Tracker = () => {
 
   // Add console.log to debug
   useEffect(() => {
-    console.log('User Role:', userRole);
     console.log('Batch:', batch);
     console.log('Steps:', getSteps());
   }, [userRole, batch]);

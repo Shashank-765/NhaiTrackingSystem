@@ -32,7 +32,7 @@ const Navbar = () => {
         message: data.message,
         timestamp: new Date(data.completedAt),
         batchId: data.batchId,
-      }; // Add notification using context
+      };
       addNotification(newNotification);
     });
 
@@ -41,6 +41,7 @@ const Navbar = () => {
       channel.unsubscribe();
     };
   }, [user]);
+
   const navigatetohome = () => {
     navigate("/");
   };
@@ -50,18 +51,32 @@ const Navbar = () => {
     navigate("/login");
   };
 
+  const getDashboardPath = () => {
+    const role = user?.role?.toLowerCase();
+    switch (role) {
+      case "admin":
+        return "/admin/dashboard";
+      case "agency":
+        return "/agency/dashboard";
+      case "contractor":
+        return "/contractor/dashboard";
+      default:
+        return "/dashboard";
+    }
+  };
+
   return (
     <nav className="navbar">
       <div className="logocontainercompany">
         <img onClick={navigatetohome} src={logo} alt="images" />
-      </div>{" "}
+      </div>
       <ul className="navbarUl">
         <li>
           <Link to="/">Home</Link>
         </li>
         {isAuthenticated && (
           <li>
-            <Link to="/dashboard">Dashboard</Link>
+            <Link to={getDashboardPath()}>Dashboard</Link>
           </li>
         )}
         {isAuthenticated && (

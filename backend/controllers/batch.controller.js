@@ -75,20 +75,6 @@ const createBatch = async (req, res) => {
     //     bidDuration: bidDuration
     //   };
       
-    //   console.log('Notification payload:', notificationData);
-      
-    //   const result = await pusher.trigger(
-    //     "agency-channel",
-    //     `batch-created-${agencyId}`,
-    //     notificationData
-    //   );
-      
-    //   console.log('=== Notification Sent ===');
-    //   console.log('Pusher trigger result:', result);
-    //   console.log('Response status:', result.status);
-    //   console.log('Response headers:', result.headers);
-    //   console.log('Time sent:', new Date().toISOString());
-      
     //   // Log webhook events if any
     //   pusher.webhook((event) => {
     //     console.log('=== Webhook Event After Trigger ===');
@@ -139,8 +125,6 @@ const getBatchById = async (req, res) => {
     }
 
     const batch = await Batch.findById(req.params.id);
-    console.log("Found batch:", batch);
-
     if (!batch) {
       console.log("Batch not found");
       return res.status(404).json({
@@ -149,7 +133,6 @@ const getBatchById = async (req, res) => {
       });
     }
 
-    console.log("Sending batch data");
     res.status(200).json({
       success: true,
       data: batch,
