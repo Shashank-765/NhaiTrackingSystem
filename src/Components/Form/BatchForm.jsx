@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { toast } from 'react-toastify';
 import './Form.css'
+import { millisecondsToSeconds } from 'framer-motion';
 
 const BatchForm = ({ handleCloseBatchForm }) => {
   const [agencies, setAgencies] = useState([]);
@@ -33,12 +34,12 @@ const BatchForm = ({ handleCloseBatchForm }) => {
       console.log('Fetched data:', data);
 
       if (data.success) {
-        const agencyUsers = data.data.filter(user => user.role.toLowerCase() === 'agency');
-        const contractorUsers = data.data.filter(user => user.role.toLowerCase() === 'contractor');
-        
+        const agencyUsers = data?.data?.filter(user => user.role.toLowerCase() === 'agency');
+        const contractorUsers = data?.data?.filter(user => user.role.toLowerCase() === 'contractor');
+
         console.log('Agencies found:', agencyUsers);
         console.log('Contractors found:', contractorUsers);
-        
+
         setAgencies(agencyUsers);
         setContractors(contractorUsers);
       } else {
@@ -59,10 +60,9 @@ const BatchForm = ({ handleCloseBatchForm }) => {
       [name]: value
     }));
   };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     try {
       // Find selected agency and contractor objects
       const selectedAgency = agencies.find(a => a._id === formData.agency);
@@ -84,10 +84,12 @@ const BatchForm = ({ handleCloseBatchForm }) => {
         contractorId: selectedContractor._id,
         contractorName: selectedContractor.name,
         status: formData.status
+
       };
 
       const response = await fetch(
         `${import.meta.env.VITE_API_URL}/api/${import.meta.env.VITE_API_VERSION}/batches/create`,
+        // `${import.meta.env.VITE_API_URL2}/batch`,
         {
           method: 'POST',
           headers: {
@@ -97,10 +99,62 @@ const BatchForm = ({ handleCloseBatchForm }) => {
           body: JSON.stringify(batchData)
         }
       );
-
+      
       const data = await response.json();
 
       if (data.success) {
+          const newbatch3 = {
+          batchId: data?.data?._id,
+          contractId: data?.data?.contractId,
+          contractName: data?.data?.contractorName,
+          contractLocation: data?.data?.contractLocation || 'noida',
+          actualAmount: data?.data?.contractorValue || '0',
+          totalDuration: data?.data?.bidDuration || '0',
+          numberofmilestones: data?.data?.numberofmilestones || 6,
+            milestones: [
+              {
+                "milestoneNo": 2,
+                "amount": 500000,
+                "description": "Initial ground work",
+                "lastDate": "2025-08-01",
+                "nhaiPaymentDetail": {
+                  "transactionId": "",
+                  "status": "",
+                  "remark": "",
+                  "paymentDate": "",
+                  "invoiced": false
+                },
+                "agencyPaymentDetail": {
+                  "transactionId": "",
+                  "status": "",
+                  "remark": "",
+                  "paymentDate": "",
+                  "invoiced": false
+                },
+                "status": "PENDING"
+              }
+            ],
+            contractors: [
+              {
+                contractorId: selectedContractor ? selectedContractor._id : '',
+                contractorAmount: parseFloat(formData.ContractorAmount),
+                milestonesAssigned: [1, 2],
+                paymentApproved: false
+              }
+            ]
+        }
+         const response = await fetch(
+        `${import.meta.env.VITE_API_URL2}/batch`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(newbatch3)
+        }
+      );
+      
+
         toast.success('Batch created successfully');
         handleCloseBatchForm();
       } else {
@@ -137,7 +191,7 @@ const BatchForm = ({ handleCloseBatchForm }) => {
           required
         />
         <input
-          type="number" 
+          type="number"
           name="ContractBid"
           placeholder="Contract Bid"
           value={formData.ContractBid}
@@ -145,28 +199,28 @@ const BatchForm = ({ handleCloseBatchForm }) => {
           required
         />
         <input
-          type="number" 
+          type="number"
           name="ContractorAmount"
           placeholder="Contractor Amount"
           value={formData.ContractorAmount}
           onChange={handleChange}
           required
         />
-        <input 
-          type="text" 
+        <input
+          type="text"
           name="ContractDuration"
           placeholder="Contract Duration"
           value={formData.ContractDuration}
           onChange={handleChange}
           required
         />
-        
+
         {isLoading ? (
           <div>Loading users...</div>
         ) : (
           <>
-            <select 
-              name="agency" 
+            <select
+              name="agency"
               value={formData.agency}
               onChange={handleChange}
               required
@@ -175,7 +229,7 @@ const BatchForm = ({ handleCloseBatchForm }) => {
               {agencies.length > 0 ? (
                 agencies.map((agency) => (
                   <option key={agency._id} value={agency._id}>
-                    {agency.name} 
+                    {agency.name}
                     {/* ({agency.uniqueId}) */}
                   </option>
                 ))
@@ -184,7 +238,7 @@ const BatchForm = ({ handleCloseBatchForm }) => {
               )}
             </select>
 
-            <select 
+            <select
               name="contractor"
               value={formData.contractor}
               onChange={handleChange}
@@ -195,7 +249,7 @@ const BatchForm = ({ handleCloseBatchForm }) => {
                 contractors.map((contractor) => (
                   <option key={contractor._id} value={contractor._id}>
                     {contractor.name}
-                     {/* ({contractor.uniqueId}) */}
+                    {/* ({contractor.uniqueId}) */}
                   </option>
                 ))
               ) : (
@@ -205,7 +259,7 @@ const BatchForm = ({ handleCloseBatchForm }) => {
           </>
         )}
 
-        <select 
+        <select
           name="status"
           value={formData.status}
           onChange={handleChange}
