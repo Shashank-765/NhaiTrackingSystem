@@ -13,7 +13,6 @@ export const NotificationProvider = ({ children }) => {
 
   const { user } = useAuth();
 
-  // Add this debug logging
   useEffect(() => {
     console.log('Pusher Configuration:', {
       key: import.meta.env.VITE_PUSHER_KEY ? 'Configured' : 'Missing',
@@ -26,8 +25,6 @@ export const NotificationProvider = ({ children }) => {
       console.log('No user found, skipping Pusher setup');
       return;
     }
-
-    console.log('Setting up Pusher for user:', user.role);
     // Initialize Pusher
     const pusher = new Pusher(import.meta.env.VITE_PUSHER_KEY, {
       cluster: import.meta.env.VITE_PUSHER_CLUSTER,
@@ -36,12 +33,8 @@ export const NotificationProvider = ({ children }) => {
     let currentChannel = null;
 
     if (user.role.toLowerCase() === "admin") {
-      console.log("Setting up admin notifications...");
-      // Subscribe to admin channel for invoice downloads
-      currentChannel = pusher.subscribe("admin-channel");
-      
-      // Add this new binding for agency payment notifications
-      currentChannel.bind("agency-payment-received", (data) => {
+      currentChannel = pusher.subscribe("admin-channel");  
+        currentChannel.bind("agency-payment-received", (data) => {
         console.log("Received agency payment notification:", data);
         const notification = {
           id: data.id,
@@ -77,6 +70,19 @@ export const NotificationProvider = ({ children }) => {
         addNotification(notification);
       });
 
+      // Add batch creation notification for admin
+      currentChannel.bind("batch-created", (data) => {
+        const notification = {
+          id: data.id,
+          message: data.message,
+          timestamp: data.timestamp,
+          type: "batch-creation",
+          batchId: data.batchId,
+          agencyId: data.agencyId,
+        };
+        addNotification(notification);
+      });
+
       currentChannel.bind(`batch-approved-${user.id}`, (data) => {
         const notification = {
           id: data.id,
@@ -89,8 +95,8 @@ export const NotificationProvider = ({ children }) => {
       });
     } else if (user.role.toLowerCase() === "agency") {
       currentChannel = pusher.subscribe("agency-channel");
-      // Listen for batch creation notifications
-      currentChannel.bind(`batch-created-${user.id}`, (data) => {
+      // Listen for batch creation notifications from admin
+      currentChannel.bind("batch-created", (data) => {
         const notification = {
           id: data.id,
           message: data.message,

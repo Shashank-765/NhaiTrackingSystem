@@ -62,28 +62,6 @@ const createBatch = async (req, res) => {
       }
     );
     
-    // try {
-    //   const notificationData = {
-    //     id: `batch-${Date.now()}`,
-    //     message: `New batch "${contractTitle}" has been created for you with contractor ${contractorName}`,
-    //     timestamp: new Date().toISOString(),
-    //     type: "batch-creation",
-    //     batchId: newBatch._id,
-    //     contractTitle: contractTitle,
-    //     contractorName: contractorName,
-    //     bidValue: bidValue,
-    //     bidDuration: bidDuration
-    //   };
-      
-    //   // Log webhook events if any
-    //   pusher.webhook((event) => {
-    //     console.log('=== Webhook Event After Trigger ===');
-    //     console.log('Event:', event);
-    //   });
-
-    // } catch (pusherError) {
-    //   console.error('=== Notification Error ===');
-    // }
     res.status(201).json({
       success: true,
       message: "Batch created successfully",

@@ -20,6 +20,7 @@ const AgencyDashboard = () => {
       currentStatus: "",
       newStatus: "",
     });
+  const [refreshTrigger, setRefreshTrigger] = useState(false);
 
   const [payInfoForm, setPayInfoForm] = useState({
     isOpen: false,
