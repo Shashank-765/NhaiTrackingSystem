@@ -52,11 +52,17 @@ const batchSchema = new mongoose.Schema(
       enum: ["pending", "approved", "rejected"],
       default: "pending",
     },
+    // workStatus: {
+    //   type: String,
+    //   enum: ["pending", "completed"],
+    //   default: "pending",
+    // },
     workStatus: {
-      type: String,
-      enum: ["pending", "completed"],
-      default: "pending",
-    },
+  type: String,
+  enum: ["pending", "30_percent", "80_percent", "100_percent", "completed"],
+  default: "pending",
+},
+
     workApproved: {
       type: Boolean,
       default: false,

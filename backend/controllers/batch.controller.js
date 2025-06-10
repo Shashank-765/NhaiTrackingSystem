@@ -202,7 +202,7 @@ const updateBatchStatus = async (req, res) => {
 const updateWorkDetails = async (req, res) => {
   try {
     const { id } = req.params;
-    const { workStatus, workDetails } = req.body;
+    const { workStatus, workDetails, workComment } = req.body;
 
     const batch = await Batch.findById(id);
     if (!batch) {
@@ -211,38 +211,82 @@ const updateWorkDetails = async (req, res) => {
         message: "Batch not found",
       });
     }
-    const previousStatus = batch.workStatus;
-    batch.workStatus = workStatus;
-    batch.workDetails = workDetails;
 
-    // If work status changed to completed, record the completion time
-    if (workStatus === "completed" && previousStatus !== "completed") {
+    const validStatuses = ['pending', '30_percent', '80_percent', '100_percent'];
+    if (!validStatuses.includes(workStatus)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid work status",
+      });
+    }
+
+    if (workStatus !== 'pending' && !workComment) {
+      return res.status(400).json({
+        success: false,
+        message: "Comment is required for work status updates",
+      });
+    }
+
+    const finalStatus = workStatus === "100_percent" ? "completed" : workStatus;
+
+    const previousStatus = batch.workStatus;
+    batch.workStatus = finalStatus;
+    batch.workDetails = workDetails;
+    batch.workComment = workComment;
+
+    // Handle completion logic
+    if (workStatus === "100_percent" && previousStatus !== "completed") {
       batch.completedAt = new Date();
-      // Trigger Pusher notification
+
+      // Notify admin
       await pusher.trigger("admin-channel", "work-completed", {
-        message: `${batch.contractorName} has finished ${batch.contractTitle}`,
+        message: `${batch.contractorName} has completed 100% of work for ${batch.contractTitle}`,
         batchId: batch._id,
         contractorName: batch.contractorName,
         batchTitle: batch.contractTitle,
         completedAt: batch.completedAt,
       });
 
+      // Notify agency
+      await pusher.trigger(`agency-channel`, `work-completed-${batch.agencyId}`, {
+        id: `work-${Date.now()}`,
+        message: `${batch.contractorName} has completed 100% of work for ${batch.contractTitle}`,
+        batchId: batch._id,
+        contractorName: batch.contractorName,
+        batchTitle: batch.contractTitle,
+        completedAt: batch.completedAt,
+        timestamp: new Date().toISOString(),
+        type: "work-completion",
+      });
+
+    } else if (workStatus !== "pending") {
+      // Notify progress (30% or 80%)
+      const statusMessage = workStatus === "30_percent" ? "30%" : "80%";
+
+      await pusher.trigger("admin-channel", "work-progress", {
+        message: `${batch.contractorName} has completed ${statusMessage} of work for ${batch.contractTitle}`,
+        batchId: batch._id,
+        contractorName: batch.contractorName,
+        batchTitle: batch.contractTitle,
+        workStatus: finalStatus,
+        workComment: workComment,
+        timestamp: new Date().toISOString(),
+      });
+
       await pusher.trigger(
-        `agency-channel`,
-        `work-completed-${batch.agencyId}`,
-        {
-          //id so that notification is sent to that particular agency
-          id: `work-${Date.now()}`, // Add an ID for the notification
-          message: `${batch.contractorName} has finished ${batch.contractTitle}`,
-          batchId: batch._id,
-          contractorName: batch.contractorName,
-          batchTitle: batch.contractTitle,
-          completedAt: batch.completedAt,
-          timestamp: new Date().toISOString(),
-          type: "work-completion",
-        }
-      );
-      // console.log('Pusher notification sent successfully');
+      `agency-channel`,
+      `work-progress-${batch.agencyId}`,
+      {
+        id: `work-${Date.now()}`,
+        message: `${batch.contractorName} has completed ${statusMessage} of work for ${batch.contractTitle}`,
+        batchId: batch._id,
+        contractorName: batch.contractorName,
+        batchTitle: batch.contractTitle,
+        workStatus: finalStatus,
+        workComment: workComment,
+        timestamp: new Date().toISOString(),
+        type: "work-progress",
+      });
     }
 
     await batch.save();
@@ -260,6 +304,7 @@ const updateWorkDetails = async (req, res) => {
     });
   }
 };
+
 
 const approveWork = async (req, res) => {
   try {

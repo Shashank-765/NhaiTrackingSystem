@@ -6,7 +6,8 @@ import 'react-toastify/dist/ReactToastify.css'
 const ContractorBatchEditForm = ({batch, handleContractorBatchForm}) => {
     const [formData, setFormData] = useState({
         workDetails: batch.workDetails || '',
-        workStatus: batch.workStatus || 'pending'
+        workStatus: batch.workStatus || 'pending',
+        workComment: batch.workComment || ''
     });
 
     const handleChange = (e) => {
@@ -15,8 +16,17 @@ const ContractorBatchEditForm = ({batch, handleContractorBatchForm}) => {
             ...prev,
             [name]: value
         }));
-    };    const handleSubmit = async (e) => {
+    };
+
+    const handleSubmit = async (e) => {
         e.preventDefault();
+        if (formData.workStatus !== 'pending' && !formData.workComment.trim()) {
+            toast.error('Please provide a comment for the work status', {
+                autoClose: 2000
+            });
+            return;
+        }
+
         try {
             const response = await fetch(
                 `${import.meta.env.VITE_API_URL}/api/${import.meta.env.VITE_API_VERSION}/batches/${batch._id}/work-details`,
@@ -28,7 +38,8 @@ const ContractorBatchEditForm = ({batch, handleContractorBatchForm}) => {
                     },
                     body: JSON.stringify({
                         workDetails: formData.workDetails,
-                        workStatus: formData.workStatus
+                        workStatus: formData.workStatus,
+                        workComment: formData.workComment
                     }),
                 }
             );
@@ -57,47 +68,64 @@ const ContractorBatchEditForm = ({batch, handleContractorBatchForm}) => {
     return (
         <div className='overlay'>
             <form onSubmit={handleSubmit} className='contractor-batch-edit-form'>
-            <h2>Edit Contractor Batch</h2>
-            <div className="form-group">
-                <label htmlFor="contractId">Contract ID: </label>
-                <input type="text" id="contractId" name="contractId" value={batch.contractId} disabled/>
-            </div>
-            <div className="form-group">
-                <label htmlFor="contractTitle">Contract Title: </label>
-                <input type="text" id="contractTitle" name="contractTitle" value={batch.contractTitle} disabled/>
-            </div>
-            <div className="form-group">
-                <label htmlFor="agencyName">Agency Name: </label>
-                <input type="text" id="agencyName" name="agencyName" value={batch.agencyName} disabled/>
-            </div>            <div className="form-group">
-                <label htmlFor="workDetails">Work:</label>
-                <textarea 
-                    name="workDetails" 
-                    id="workDetails" 
-                    rows="4"
-                    value={formData.workDetails}
-                    onChange={handleChange}
-                ></textarea>
-            </div>
-            <div className="form-group">
-                <label htmlFor="workStatus">Work Status:</label>
-                <select 
-                    name="workStatus" 
-                    id="workStatus"
-                    value={formData.workStatus}
-                    onChange={handleChange}
-                >
-                    <option value="pending">Pending</option>
-                    <option value="completed">Completed</option>
-                </select>
-            </div>
-            <div className="button-div">
-                <button type="button" className='cancel-btn' onClick={() => handleContractorBatchForm()}>Cancel</button>
-                <button type="submit" className='confirm-btn'>Save Changes</button>            </div>
-        </form>
-        {/* <ToastContainer /> */}
-    </div>
-  )
+                <h2>Edit Contractor Batch</h2>
+                <div className="form-group">
+                    <label htmlFor="contractId">Contract ID: </label>
+                    <input type="text" id="contractId" name="contractId" value={batch.contractId} disabled/>
+                </div>
+                <div className="form-group">
+                    <label htmlFor="contractTitle">Contract Title: </label>
+                    <input type="text" id="contractTitle" name="contractTitle" value={batch.contractTitle} disabled/>
+                </div>
+                <div className="form-group">
+                    <label htmlFor="agencyName">Agency Name: </label>
+                    <input type="text" id="agencyName" name="agencyName" value={batch.agencyName} disabled/>
+                </div>
+                <div className="form-group">
+                    <label htmlFor="workDetails">Work:</label>
+                    <textarea 
+                        name="workDetails" 
+                        id="workDetails" 
+                        rows="4"
+                        value={formData.workDetails}
+                        onChange={handleChange}
+                    ></textarea>
+                </div>
+                <div className="form-group">
+                    <label htmlFor="workStatus">Work Status:</label>
+                    <select 
+                        name="workStatus" 
+                        id="workStatus"
+                        value={formData.workStatus}
+                        onChange={handleChange}
+                    >
+                        <option value="pending">Pending</option>
+                        <option value="30_percent">30% Work Completed</option>
+                        <option value="80_percent">80% Work Completed</option>
+                        <option value="100_percent">100% Work Completed</option>
+                    </select>
+                </div>
+                {formData.workStatus !== 'pending' && (
+                    <div className="form-group">
+                        <label htmlFor="workComment">Status Comment:</label>
+                        <textarea 
+                            name="workComment" 
+                            id="workComment" 
+                            rows="3"
+                            value={formData.workComment}
+                            onChange={handleChange}
+                            placeholder={`Please provide details about the ${formData.workStatus} completion`}
+                            required
+                        ></textarea>
+                    </div>
+                )}
+                <div className="button-div">
+                    <button type="button" className='cancel-btn' onClick={() => handleContractorBatchForm()}>Cancel</button>
+                    <button type="submit" className='confirm-btn'>Save Changes</button>
+                </div>
+            </form>
+        </div>
+    )
 }
 
 export default ContractorBatchEditForm

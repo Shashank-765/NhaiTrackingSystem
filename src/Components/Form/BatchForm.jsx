@@ -31,14 +31,9 @@ const BatchForm = ({ handleCloseBatchForm }) => {
       );
 
       const data = await response.json();
-      console.log('Fetched data:', data);
-
       if (data.success) {
         const agencyUsers = data?.data?.filter(user => user.role.toLowerCase() === 'agency');
         const contractorUsers = data?.data?.filter(user => user.role.toLowerCase() === 'contractor');
-
-        console.log('Agencies found:', agencyUsers);
-        console.log('Contractors found:', contractorUsers);
 
         setAgencies(agencyUsers);
         setContractors(contractorUsers);

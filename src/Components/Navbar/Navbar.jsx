@@ -15,16 +15,10 @@ const Navbar = () => {
 
   useEffect(() => {
     if (user?.role !== "admin") return;
-
-    // Initialize Pusher
     const pusher = new Pusher(import.meta.env.VITE_PUSHER_KEY, {
       cluster: import.meta.env.VITE_PUSHER_CLUSTER,
     });
-
-    // Subscribe to admin channel
     const channel = pusher.subscribe("admin-channel");
-
-    // Listen for work completion events
     channel.bind("work-completed", (data) => {
       console.log("Received notification:", data);
       const newNotification = {

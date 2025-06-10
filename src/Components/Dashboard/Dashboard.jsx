@@ -42,11 +42,8 @@ const Dashboard = () => {
   });
 
   const [selectedBatchInfo, setSelectedBatchInfo] = useState(null);
-
   const [refreshTrigger, setRefreshTrigger] = useState(false);
-
   const navigate = useNavigate();
-
   const handleCreateUser = () => {
     setShowUserForm(true);
   };
@@ -73,7 +70,45 @@ const Dashboard = () => {
       });
       return;
     }
-    setPayInfoForm({ isOpen: !payInfoForm.isOpen, batchId });
+
+    // Calculate payment amount based on work status
+    let paymentPercentage = 0;
+    let paymentAmount = 0;
+
+    switch(batch.workStatus) {
+      case '30_percent':
+        paymentPercentage = 30;
+        paymentAmount = (batch.contractorValue * 30) / 100;
+        break;
+      case '80_percent':
+        paymentPercentage = 80;
+        paymentAmount = (batch.contractorValue * 80) / 100;
+        break;
+      case '100_percent':
+        paymentPercentage = 100;
+        paymentAmount = batch.contractorValue;
+        break;
+      default:
+        toast.warning('Work status must be at least 30% complete for payment', {
+          autoClose: 2000
+        });
+        return;
+    }
+
+    // Only allow payment if work is approved
+    if (!batch.workApproved) {
+      toast.warning('Work must be approved before payment can be made', {
+        autoClose: 2000
+      });
+      return;
+    }
+
+    setPayInfoForm({ 
+      isOpen: !payInfoForm.isOpen, 
+      batchId,
+      paymentAmount,
+      paymentPercentage
+    });
   };
 
   const fetchUsers = async () => {
@@ -452,7 +487,9 @@ const Dashboard = () => {
                       <button
                         type="button"
                         className="payinfo-button"
-                        disabled={batch.agencyToNhaiPaymentStatus.toLowerCase() === 'pending'}
+                        disabled={
+                          batch.agencyToNhaiPaymentStatus.toLowerCase() === 'pending'
+                        }
                         onClick={() => handlePayInfoForm(batch._id)}
                       >
                         Pay to Contractor
@@ -478,6 +515,8 @@ const Dashboard = () => {
       {payInfoForm.isOpen && (
         <PayInfoForm
           batchId={payInfoForm.batchId}
+          paymentAmount={payInfoForm.paymentAmount}
+          paymentPercentage={payInfoForm.paymentPercentage}
           onClose={() => setPayInfoForm({ isOpen: false, batchId: null })}
           onSuccess={refreshBatchInfo}
         />
