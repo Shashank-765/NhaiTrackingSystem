@@ -220,12 +220,12 @@ const Home = () => {
           viewport={{ once: true }}
         >
           <div className="section-content">
-            <h3 className="section-heading">How It Works – Real Example</h3>
-            <p className="how-it-works-subtitle">Follow a ₹50 Cr contract through its complete lifecycle</p>
+            <h3 className="section-heading">How It Works - Real Example</h3>
+            <p className="how-it-works-subtitle">Follow a contract through its complete lifecycle</p>
             <div className="process-timeline">
               <div className="timeline-item">
                 <div className="timeline-content">
-                  <h4>NHAI creates ₹50 Cr contract</h4>
+                  <h4>NHAI creates  contract</h4>
                   <p>Project initiated and contract terms defined</p>
                 </div>
                 <div className="timeline-dot"></div>
