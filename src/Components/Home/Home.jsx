@@ -4,7 +4,6 @@ import { motion } from "framer-motion";
 import Invoice from '../Invoice/Invoice';
 import imageBanner from '../../Images/bannerimage.png';
 import secondSectionImage from '../../Images/secondsection.png';
-import { SlPaperClip } from "react-icons/sl";
 import { IoIosArrowDown } from "react-icons/io";
 import platform1 from "../../Images/platform1.png";
 import platform2 from "../../Images/platform2.png";

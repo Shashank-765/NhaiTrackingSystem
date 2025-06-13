@@ -5,7 +5,6 @@ import { useAuth } from "../../context/AuthContext";
 import { useNotifications } from "../../context/NotificationContext";
 import bell from "../../Images/bell.png";
 import Pusher from "pusher-js";
-import { SlPaperClip } from "react-icons/sl";
 import logo from "../../Images/logo.png";
 
 const Navbar = () => {
