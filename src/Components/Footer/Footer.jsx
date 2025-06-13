@@ -1,7 +1,6 @@
 import React from 'react'
 import './Footer.css'
 import Image1 from '../../Images/companylogo.png'
-import { SlPaperClip } from "react-icons/sl";
 import { Link, useNavigate } from 'react-router-dom'
 import logo from "../../Images/logo.png";
 function Footer() {
