@@ -9,7 +9,7 @@ const InfoModal = ({ batch, onClose, refreshTrigger }) => {
     const fetchLatestBatchData = async () => {
       try {
         const response = await fetch(
-          `${import.meta.env.VITE_API_URL}/api/${import.meta.env.VITE_API_VERSION}/batches/${batch._id}`,
+          `${import.meta.env.VITE_API_URL}/${import.meta.env.VITE_API_VERSION}/batches/${batch._id}`,
           {
             headers: {
               Authorization: `Bearer ${localStorage.getItem('token')}`

@@ -64,18 +64,27 @@ exports.createUser = async (req, res) => {
     }
 };
 
-// @desc    Get all users
-// @route   GET /api/v1/users
-// @access  Private (Admin only)
 exports.getUsers = async (req, res) => {
     try {
-        const users = await User.find()
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 10;
+        const skip = (page -1) * limit;
+        const users = await User.find().skip(skip).limit(limit)
             .select('-password')
             .sort({ createdAt: -1 });
 
         res.json({
             success: true,
-            data: users
+            data: users,
+           pagination: {
+            currentPage: page,
+            totalUsers: await User.countDocuments(),
+            totalPages: Math.ceil(await User.countDocuments() / limit),
+            hasNextPage: (page * limit) < await User.countDocuments(),
+            hasPreviousPage: page > 1,
+            nextPage: (page * limit) < await User.countDocuments() ? page + 1 : null,
+            previousPage: page > 1 ? page - 1 : null
+        }
         });
 
     } catch (error) {

@@ -19,7 +19,7 @@ const ContractorBatchEditForm = ({batch, handleContractorBatchForm}) => {
         e.preventDefault();
         try {
             const response = await fetch(
-                `${import.meta.env.VITE_API_URL}/api/${import.meta.env.VITE_API_VERSION}/batches/${batch._id}/work-details`,
+                `${import.meta.env.VITE_API_URL}/${import.meta.env.VITE_API_VERSION}/batches/${batch._id}/work-details`,
                 {
                     method: 'PATCH',
                     headers: {
@@ -39,7 +39,6 @@ const ContractorBatchEditForm = ({batch, handleContractorBatchForm}) => {
                 toast.success('Work saved successfully',{
                     autoClose: 1000,
                 });
-                // Close form and trigger refresh
                 handleContractorBatchForm();
             } else {
                 toast.error(data.message || 'Error updating work details',{

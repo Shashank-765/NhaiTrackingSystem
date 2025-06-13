@@ -49,7 +49,7 @@ const AgencyDashboard = () => {
   const fetchBatches = async () => {
     try {
       const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/api/${import.meta.env.VITE_API_VERSION}/batches`,
+        `${import.meta.env.VITE_API_URL}/${import.meta.env.VITE_API_VERSION}/batches`,
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -93,7 +93,7 @@ const AgencyDashboard = () => {
   
       try {
         const response = await fetch(
-          `${import.meta.env.VITE_API_URL}/api/${
+          `${import.meta.env.VITE_API_URL}/${
             import.meta.env.VITE_API_VERSION
           }/batches/${batchId}/status`,
           {

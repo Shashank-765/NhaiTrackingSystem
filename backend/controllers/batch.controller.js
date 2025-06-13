@@ -78,13 +78,28 @@ const createBatch = async (req, res) => {
 
 const getAllBatches = async (req, res) => {
   try {
-    const batches = await Batch.find();
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+
+    const totalBatches = await Batch.countDocuments();
+    const batches = await Batch.find()
+      .skip(skip)
+      .limit(limit)
+      .sort({ createdAt: -1 });
+
     res.status(200).json({
       success: true,
       data: batches,
+      pagination: {
+        currentPage: page,
+        totalPages: Math.ceil(totalBatches / limit),
+        totalItems: totalBatches,
+        itemsPerPage: limit
+      }
     });
   } catch (error) {
-      res.status(500).json({
+    res.status(500).json({
       success: false,
       message: "Error fetching batches",
       error: error.message,

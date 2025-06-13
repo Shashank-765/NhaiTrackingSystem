@@ -4,10 +4,8 @@ const { validateCreateUser } = require('../middleware/validators');
 const { protect, isAdmin } = require('../middleware/auth.middleware');
 
 const router = express.Router();
-
-// Protect all routes after this middleware
 router.use(protect);
-router.use(isAdmin); // Only admin can access these routes
+router.use(isAdmin);
 
 router.route('/')
     .post(validateCreateUser, createUser)

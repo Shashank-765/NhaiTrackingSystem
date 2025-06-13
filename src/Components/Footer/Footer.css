@@ -43,9 +43,9 @@
 }
 
 .footerlinksheading {
-  font-family: Bold;
+ font-family: 'Inter', sans-serif;
   font-weight: 600;
-  font-size: 15px;
+  font-size: 24px;
   line-height: 100%;
   letter-spacing: 0%;
   padding: 0.25rem;
@@ -53,8 +53,8 @@
 
 .footerlink {
   font-weight: 400;
-  font-size: 16px;
-  line-height: 100%;
+  font-size: 22px;
+  line-height: 2;
   letter-spacing: 0%;
   cursor: pointer;
   >a {
@@ -84,4 +84,44 @@
   .footerleftIcon {
     width: 50%;
   }
+}
+
+.contract-chain-nhai {
+  background-color:#001f3f;
+  color: white;
+  text-align: center;
+  padding: 4rem 0;
+  width: 100%;
+  position: relative;
+}
+
+.contract-chain-nhai p {
+  margin:0px 0px 10px 0px;
+}
+
+.footer-main-title {
+  font-size: 30px;
+  margin-bottom: 10px;
+}
+
+.footer-logo-image {
+  width: 30px;
+  height: 30px;
+  vertical-align: middle;
+  margin-right: 8px;
+}
+
+.footer-p1,
+.footer-p2 {
+  color: #D1D5DB;
+  font-size: 18px;
+  margin-bottom: 8px;
+  line-height: 1.4;
+}
+
+.footer-p3 {
+  color: #D1D5DB;
+  font-size: 14px;
+  margin-top: 15px;
+  word-spacing: 15px;
 }

@@ -1,17 +1,36 @@
 import React, { useEffect } from "react";
 import "./Navbar.css";
 import { Link, useNavigate } from "react-router-dom";
-import logo from "../../Images/companylogo.png";
 import { useAuth } from "../../context/AuthContext";
 import { useNotifications } from "../../context/NotificationContext";
 import bell from "../../Images/bell.png";
 import Pusher from "pusher-js";
+import { SlPaperClip } from "react-icons/sl";
+import logo from "../../Images/logo.png";
 
 const Navbar = () => {
   const navigate = useNavigate();
   const { isAuthenticated, logout, user } = useAuth();
   const { hasNewNotification, addNotification, clearNewNotificationStatus } =
     useNotifications();
+
+  const scrollToSection = (sectionId) => {
+    if (window.location.pathname !== '/') {
+      navigate('/');
+      // Wait for navigation to complete before scrolling
+      setTimeout(() => {
+        const element = document.getElementById(sectionId);
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth' });
+        }
+      }, 100);
+    } else {
+      const element = document.getElementById(sectionId);
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth' });
+      }
+    }
+  };
 
   useEffect(() => {
     if (user?.role !== "admin") return;
@@ -42,15 +61,6 @@ const Navbar = () => {
     };
   }, [user]);
 
-  const navigatetohome = () => {
-    navigate("/");
-  };
-
-  const handleLogout = () => {
-    logout();
-    navigate("/login");
-  };
-
   const getDashboardPath = () => {
     const role = user?.role?.toLowerCase();
     switch (role) {
@@ -66,45 +76,45 @@ const Navbar = () => {
   };
 
   return (
-    <nav className="navbar">
-      <div className="logocontainercompany">
-        <img onClick={navigatetohome} src={logo} alt="images" />
+    <nav id="mainNavbar" className="navbar">
+      <div className="logocontainercompany" onClick={() => navigate('/')} style={{ cursor: 'pointer' }}>
+        <img src={logo} alt="ContractChain NHAI Logo" className="navbar-logo-image" /> ContractChain NHAI
       </div>
-      <ul className="navbarUl">
-        <li>
-          <Link to="/">Home</Link>
-        </li>
-        {isAuthenticated && (
+      <div className="navbar-middle-links">
+        <ul className="navbarUl">
           <li>
-            <Link to={getDashboardPath()}>Dashboard</Link>
+            <a href="#about" onClick={(e) => { e.preventDefault(); scrollToSection('about'); }}>About</a>
           </li>
-        )}
-        {isAuthenticated && (
           <li>
-            <Link to="/profile">Profile</Link>
+            <a href="#platform-features-section" onClick={(e) => { e.preventDefault(); scrollToSection('platform-features-section'); }}>Features</a>
           </li>
-        )}
-        {!isAuthenticated ? (
           <li>
-            <Link to="/login">Login</Link>
+            <a href="#who-uses-section" onClick={(e) => { e.preventDefault(); scrollToSection('who-uses-section'); }}>Users</a>
           </li>
+          <li>
+            <a href="#faqs-section" onClick={(e) => { e.preventDefault(); scrollToSection('faqs-section'); }}>FAQ</a>
+          </li>
+        </ul>
+      </div>
+      <div className="navbar-right-section">
+        {isAuthenticated ? (
+          <Link to={getDashboardPath()} className="navbar-button">
+            Dashboard
+          </Link>
         ) : (
-          <li>
-            <button onClick={handleLogout} className="logout-btn">
-              Logout
-            </button>
-          </li>
+          <Link to="/login" className="navbar-button">
+            Get Started
+          </Link>
         )}
-        {/* {isAuthenticated && user?.role?.toLowerCase() === "admin" && ( */}
         {isAuthenticated && (
-          <li className="notification-bell">
+          <div className="notification-bell-container">
             <Link to="/notifications" onClick={clearNewNotificationStatus}>
               <img src={bell} alt="" className="bell-icon" />
               {hasNewNotification && <span className="notification-dot"></span>}
             </Link>
-          </li>
+          </div>
         )}
-      </ul>
+      </div>
     </nav>
   );
 };

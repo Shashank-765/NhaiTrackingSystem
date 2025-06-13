@@ -29,7 +29,7 @@ const ContractorDashboard = () => {
   const fetchBatches = async () => {
     try {
       const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/api/${
+        `${import.meta.env.VITE_API_URL}/${
           import.meta.env.VITE_API_VERSION
         }/batches`,
         {
@@ -214,7 +214,7 @@ const ContractorDashboard = () => {
         >
           <div
             style={{
-              backgroundColor: "white",
+              backgroundColor: "red",
               padding: "20px",
               borderRadius: "8px",
               maxHeight: "90vh",

@@ -1,46 +1,26 @@
 import React from 'react'
 import './Footer.css'
 import Image1 from '../../Images/companylogo.png'
+import { SlPaperClip } from "react-icons/sl";
 import { Link, useNavigate } from 'react-router-dom'
+import logo from "../../Images/logo.png";
 function Footer() {
     const navigate = useNavigate();
     const navigatetohome = () => {
         navigate('/')
     }
     return (
-        <div className='footer-section'>
-            <div className='footerleftIcon'>
-                <div className='footerleftIconcontainer'>
-
-                    <img onClick={navigatetohome} src={Image1} alt='images' />
-                </div>
-                <p>© 2025 Bastionex Infotech, Inc.
-                    All rights reserved.</p>
+        <>
+            <div className='contract-chain-nhai'>
+                <p className='footer-main-title'><img src={logo} alt="ContractChain NHAI Logo" className="footer-logo-image" /> ContractChain NHAI</p>
+                <p className='footer-p1' style={{color:"#4BA3C7"}}>Powered by Hyperledger Fabric</p>
+                <p className='footer-p2'>Built for NHAI & Government Infrastructure</p>
+                <p className='footer-p3'>Contact Privacy Terms</p>
+                {/* <a href="#" className="help-button">
+                    <span className="help-icon">?</span> Help
+                </a> */}
             </div>
-            <div className='footerrightcontent'>
-                <div className='footerrightsections'>
-                    <p className='footerlinksheading'>Quick Links</p>
-                    <p className='footerlink'><Link to='/'>Home</Link></p>
-                    <p className='footerlink'><Link to='/about'>About</Link></p>
-                    <p className='footerlink'><Link to='/product'>Explore</Link></p>
-                    <p className='footerlink'><Link to='/contact'>Contact</Link></p>
-                </div>
-                <div className='footerrightsections'>
-                    <p className='footerlinksheading'>Exolore More</p>
-                    <p className='footerlink'><Link to='/faqs'>Faq</Link></p>
-                    <p className='footerlink'><Link to='/privacypolicy'>Privacy Policy</Link></p>
-
-                </div>
-                <div className='footerrightsections'>
-                    <p className='footerlinksheading'>Connect with us</p>
-                    <p className='footerlink'><a href="https://www.facebook.com/" target="_blank" rel="noreferrer">Facebook</a></p>
-                    <p className='footerlink'><a href="https://twitter.com/" target="_blank" rel="noreferrer">Twitter</a></p>
-                    <p className='footerlink'><a href="https://linkedin.com/" target="_blank" rel="noreferrer">LinkedIn</a></p>
-                    <p className='footerlink'><a href="https://www.instagram.com/" target="_blank" rel="noreferrer">Instagram</a></p>
-
-                </div>
-            </div>
-        </div>
+        </>
     )
 }
 

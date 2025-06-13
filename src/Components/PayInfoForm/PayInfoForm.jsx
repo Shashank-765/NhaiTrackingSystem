@@ -24,12 +24,7 @@ const PayInfoForm = ({ batchId, onClose, onSuccess }) => {
   useEffect(() => {
     const fetchBatchDetails = async () => {
       try {
-        // console.log("API URL:", import.meta.env.VITE_API_URL);
-        // console.log("API Version:", import.meta.env.VITE_API_VERSION);
-        // console.log("Batch ID:", batchId);
-        // console.log("Token:", localStorage.getItem("token"));
-
-        const url = `${import.meta.env.VITE_API_URL}/api/${
+        const url = `${import.meta.env.VITE_API_URL}/${
           import.meta.env.VITE_API_VERSION
         }/batches/${batchId}`;
         // console.log("Full URL:", url);
@@ -135,7 +130,7 @@ const PayInfoForm = ({ batchId, onClose, onSuccess }) => {
     }
 
       const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/api/${
+        `${import.meta.env.VITE_API_URL}/${
           import.meta.env.VITE_API_VERSION
         }/batches/${batchId}/payment`,
         {
@@ -204,7 +199,7 @@ const PayInfoForm = ({ batchId, onClose, onSuccess }) => {
             <label>Amount</label>
             <input
               type="text"
-              value={`₹${batch.bidValue.toLocaleString()}`}
+              value={`₹${batch.contractorValue.toLocaleString()}`}
               disabled
             />
           </div>

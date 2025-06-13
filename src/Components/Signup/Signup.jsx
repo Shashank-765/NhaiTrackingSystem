@@ -29,7 +29,7 @@ const Signup = () => {
     setIsCircularloader(true);
 
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/${import.meta.env.VITE_API_VERSION}/auth/login`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/${import.meta.env.VITE_API_VERSION}/auth/login`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

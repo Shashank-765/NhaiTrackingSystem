@@ -21,7 +21,7 @@ const Tracker = () => {
       try {
         setIsLoading(true);
         const response = await fetch(
-          `${import.meta.env.VITE_API_URL}/api/${
+          `${import.meta.env.VITE_API_URL}/${
             import.meta.env.VITE_API_VERSION
           }/batches/${batchId}`,
           {

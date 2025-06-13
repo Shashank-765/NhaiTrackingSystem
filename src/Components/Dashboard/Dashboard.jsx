@@ -13,6 +13,8 @@ import infoBatchAdmin from "../../Images/info-icon.png";
 import Tracker from "../Tracker/Tracker";
 import InfoModal from "../InfoModal/InfoModal";
 import { useNavigate } from 'react-router-dom';
+import logo from "../../Images/logo.png";
+import Navbar from "../Navbar/Navbar";
 
 const Dashboard = () => {
   const [showUserForm, setShowUserForm] = useState(false);
@@ -24,6 +26,15 @@ const Dashboard = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [batchSearchTerm, setBatchSearchTerm] = useState("");
   const [selectedInvoice, setSelectedInvoice] = useState(null);
+
+ const [currentPage,setCurrentPage] = useState(1);
+ const [totalPages, setTotalPages] = useState(1);
+
+ const [itemsPerPage] = useState(10);
+
+ //users
+ const [userPage, setUserPage] = useState(1);
+const [userTotalPages, setUserTotalPages] = useState(1);
   const [payInfoForm, setPayInfoForm] = useState({
     isOpen: false,
     batchId: null,
@@ -79,9 +90,9 @@ const Dashboard = () => {
   const fetchUsers = async () => {
     try {
       const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/api/${
+        `${import.meta.env.VITE_API_URL}/${
           import.meta.env.VITE_API_VERSION
-        }/users`,
+        }/users?page=${userPage}&limit=${itemsPerPage}`,
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -92,6 +103,7 @@ const Dashboard = () => {
       const data = await response.json();
 
       if (data.success) {
+        setUserTotalPages(data.pagination.totalPages);
         setUsers(data.data);
       } else {
         toast.error("Error fetching users");
@@ -107,9 +119,9 @@ const Dashboard = () => {
     try {
       setIsBatchLoading(true);
       const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/api/${
+        `${import.meta.env.VITE_API_URL}/${
           import.meta.env.VITE_API_VERSION
-        }/batches`,
+        }/batches?page=${currentPage}&limit=${itemsPerPage}`,
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -121,6 +133,7 @@ const Dashboard = () => {
 
       if (data.success) {
         setBatches(data.data);
+        setTotalPages(data.pagination.totalPages);
       } else {
         toast.error("Error fetching batches");
       }
@@ -130,6 +143,19 @@ const Dashboard = () => {
       setIsBatchLoading(false);
     }
   };
+
+  const handleBatchPageChange = (newPage) => {
+    if (newPage >= 1 && newPage <= totalPages) {
+      setCurrentPage(newPage);
+    }
+  };
+
+  const handleUserPageChange = (newPage) => {
+    if (newPage >= 1 && newPage <= userTotalPages) {
+      setUserPage(newPage);
+    }
+  };
+
   const initiateStatusUpdate = (batchId, currentStatus) => {
     // Only allow status update if current status is pending
     if (currentStatus.toLowerCase() !== "pending") {
@@ -161,7 +187,7 @@ const Dashboard = () => {
 
     try {
       const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/api/${
+        `${import.meta.env.VITE_API_URL}/${
           import.meta.env.VITE_API_VERSION
         }/batches/${batchId}/status`,
         {
@@ -215,7 +241,7 @@ const Dashboard = () => {
   const handleApprovalConfirm = async () => {
     try {
       const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/api/${
+        `${import.meta.env.VITE_API_URL}/${
           import.meta.env.VITE_API_VERSION
         }/batches/${approvalDialog.batchId}/approve-work`,
         {
@@ -271,7 +297,7 @@ const Dashboard = () => {
   useEffect(() => {
     fetchUsers();
     fetchBatches();
-  }, [refreshTrigger]);
+  }, [refreshTrigger, currentPage,userPage]);
 
   // Function to handle invoice click ----- commented out for now
   const handleInvoiceClick = (batch) => {
@@ -288,7 +314,7 @@ const Dashboard = () => {
   const handleAdminInvoiceDownload = async (batchId) => {
     try {
       const response = await fetch(
-        `${API_URL}/api/invoice/${batchId}/download-invoice`,
+        `${API_URL}/invoice/${batchId}/download-invoice`,
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -319,8 +345,6 @@ const Dashboard = () => {
 
   return (
     <div className="dashboard">
-      <h1>Admin Dashboard</h1>
-
       <div className="batch-section">
         <div className="batch-section-heading">
           <h2>Batches Overview</h2>
@@ -471,6 +495,46 @@ const Dashboard = () => {
               )}
             </tbody>
           </table>
+          <div className="pagination-controls" style={{ 
+            display: 'flex', 
+            justifyContent: 'center', 
+            alignItems: 'center', 
+            marginTop: '20px',
+            justifyContent: 'right',
+            gap: '10px'
+          }}>
+            <button 
+              onClick={() => handleBatchPageChange(currentPage - 1)}
+              disabled={currentPage === 1}
+              style={{
+                padding: '8px 16px',
+                backgroundColor: currentPage === 1 ? '#ccc' : '#007bff',
+                color: 'white',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: currentPage === 1 ? 'not-allowed' : 'pointer'
+              }}
+            >
+              Previous
+            </button>
+            <span style={{ margin: '0 10px' }}>
+              Page {currentPage} of {totalPages}
+            </span>
+            <button 
+              onClick={() => handleBatchPageChange(currentPage + 1)}
+              disabled={currentPage === totalPages}
+              style={{
+                padding: '8px 16px',
+                backgroundColor: currentPage === totalPages ? '#ccc' : '#007bff',
+                color: 'white',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: currentPage === totalPages ? 'not-allowed' : 'pointer'
+              }}
+            >
+              Next
+            </button>
+          </div>
         </div>
       </div>
 
@@ -540,7 +604,47 @@ const Dashboard = () => {
                 ))
               )}
             </tbody>
-          </table>
+             </table>
+               <div className="pagination-controls" style={{ 
+            display: 'flex', 
+            justifyContent: 'center', 
+            alignItems: 'center', 
+            marginTop: '20px',
+            justifyContent: 'right',
+            gap: '10px'
+          }}>
+            <button 
+              onClick={() => handleUserPageChange(userPage - 1)}
+              disabled={userPage === 1}
+              style={{
+                padding: '8px 16px',
+                backgroundColor: userPage === 1 ? '#ccc' : '#007bff',
+                color: 'white',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: userPage === 1 ? 'not-allowed' : 'pointer'
+              }}
+            >
+              Previous
+            </button>
+            <span style={{ margin: '0 10px' }}>
+              Page {userPage} of {userTotalPages}
+            </span>
+            <button 
+              onClick={() => handleUserPageChange(userPage + 1)}
+              disabled={userPage === userTotalPages}
+              style={{
+                padding: '8px 16px',
+                backgroundColor: userPage === userTotalPages ? '#ccc' : '#007bff',
+                color: 'white',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: userPage === userTotalPages ? 'not-allowed' : 'pointer'
+              }}
+            >
+              Next
+            </button>
+          </div>
         </div>
       </div>
       {/* status change from pending to update */}
@@ -588,6 +692,7 @@ const Dashboard = () => {
               maxHeight: "90vh",
               overflowY: "auto",
               position: "relative",
+              width:"50%"
             }}
           >
             <button
