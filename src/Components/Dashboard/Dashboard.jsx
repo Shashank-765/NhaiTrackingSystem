@@ -61,55 +61,60 @@ const Dashboard = () => {
     setShowBatchForm(false);
     fetchBatches();
   };
+const handlePayInfoForm = (batchId) => {
+  const batch = batches.find((batch) => batch._id === batchId);
 
-  const handlePayInfoForm = (batchId) => {
-    const batch = batches.find((batch) => batch._id === batchId);
-    if(batch.nhaiToContractorPaymentStatus.toLowerCase() == 'completed'){
-      toast.warning('Payment is already done',{
-        autoClose: 1000,
-      });
-      return;
-    }
-
-    // Calculate payment amount based on work status
-    let paymentPercentage = 0;
-    let paymentAmount = 0;
-
-    switch(batch.workStatus) {
-      case '30_percent':
-        paymentPercentage = 30;
-        paymentAmount = (batch.contractorValue * 30) / 100;
-        break;
-      case '80_percent':
-        paymentPercentage = 80;
-        paymentAmount = (batch.contractorValue * 80) / 100;
-        break;
-      case '100_percent':
-        paymentPercentage = 100;
-        paymentAmount = batch.contractorValue;
-        break;
-      default:
-        toast.warning('Work status must be at least 30% complete for payment', {
-          autoClose: 2000
-        });
-        return;
-    }
-
-    // Only allow payment if work is approved
-    if (!batch.workApproved) {
-      toast.warning('Work must be approved before payment can be made', {
-        autoClose: 2000
-      });
-      return;
-    }
-
-    setPayInfoForm({ 
-      isOpen: !payInfoForm.isOpen, 
-      batchId,
-      paymentAmount,
-      paymentPercentage
+  if (batch.nhaiToContractorPaymentStatus.toLowerCase() === 'completed') {
+    toast.warning('Payment is already done', {
+      autoClose: 1000,
     });
-  };
+    return;
+  }
+
+  // Calculate payment amount based on work status
+  let paymentPercentage = 0;
+  let paymentAmount = 0;
+
+  switch (batch.workStatus) {
+    case 'pending': // Treat as 30%
+    case '30_percent':
+      paymentPercentage = 30;
+      paymentAmount = (batch.contractorValue * 30) / 100;
+      break;
+
+    case '80_percent':
+      paymentPercentage = 80;
+      paymentAmount = (batch.contractorValue * 80) / 100;
+      break;
+
+  case '100_percent':
+  case 'completed': // Treat completed as 100%
+    paymentPercentage = 100;
+    paymentAmount = batch.contractorValue;
+    break;
+
+    default:
+      toast.warning('Work status must be at least 30% complete for payment', {
+        autoClose: 2000,
+      });
+      return;
+  }
+
+  // Only allow payment if work is approved
+  if (!batch.workApproved) {
+    toast.warning('Work must be approved before payment can be made', {
+      autoClose: 2000,
+    });
+    return;
+  }
+
+  setPayInfoForm({
+    isOpen: !payInfoForm.isOpen,
+    batchId,
+    paymentAmount,
+    paymentPercentage,
+  });
+};
 
   const fetchUsers = async () => {
     try {
