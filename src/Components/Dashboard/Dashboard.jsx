@@ -78,13 +78,58 @@ const [userTotalPages, setUserTotalPages] = useState(1);
 
   const handlePayInfoForm = (batchId) => {
     const batch = batches.find((batch) => batch._id === batchId);
-    if(batch.nhaiToContractorPaymentStatus.toLowerCase() == 'completed'){
-      toast.warning('Payment is already done',{
+
+    // Prevent duplicate payment
+    if (batch.nhaiToContractorPaymentStatus?.toLowerCase() === 'completed') {
+      toast.warning('Payment is already done', {
         autoClose: 1000,
       });
       return;
     }
-    setPayInfoForm({ isOpen: !payInfoForm.isOpen, batchId });
+
+    // Calculate payment amount based on work status
+    let paymentPercentage = 0;
+    let paymentAmount = 0;
+
+    switch (batch.workStatus) {
+      case 'pending': // Treat pending as 30%
+      case '30_percent':
+        paymentPercentage = 30;
+        paymentAmount = (batch.contractorValue * 30) / 100;
+        break;
+
+      case '80_percent':
+        paymentPercentage = 80;
+        paymentAmount = (batch.contractorValue * 80) / 100;
+        break;
+
+      case 'completed': // 100% payment
+        paymentPercentage = 100;
+        paymentAmount = batch.contractorValue;
+        break;
+
+      default:
+        toast.warning('Work status must be at least 30% complete for payment', {
+          autoClose: 2000,
+        });
+        return;
+    }
+
+    // Ensure work is approved before allowing payment
+    if (!batch.workApproved) {
+      toast.warning('Work must be approved before payment can be made', {
+        autoClose: 2000,
+      });
+      return;
+    }
+
+    // Open payment form with calculated details
+    setPayInfoForm({
+      isOpen: !payInfoForm.isOpen,
+      batchId,
+      paymentAmount,
+      paymentPercentage,
+    });
   };
 
   const fetchUsers = async () => {

@@ -87,6 +87,8 @@ const ContractorBatchEditForm = ({batch, handleContractorBatchForm}) => {
                     onChange={handleChange}
                 >
                     <option value="pending">Pending</option>
+                    <option value="30_percent">30% Complete</option>
+                    <option value="80_percent">80% Complete</option>
                     <option value="completed">Completed</option>
                 </select>
             </div>

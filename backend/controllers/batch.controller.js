@@ -24,6 +24,7 @@ const createBatch = async (req, res) => {
       contractorId,
       contractorName,
       status,
+      milestones
     } = req.body;
 
     // Check if batch with same contractId already exists
@@ -34,6 +35,19 @@ const createBatch = async (req, res) => {
         message: "Batch with this Contract ID already exists",
       });
     }
+
+    // Validate milestones if provided
+    if (milestones && Array.isArray(milestones)) {
+      for (const milestone of milestones) {
+        if (!milestone.heading || !milestone.amount) {
+          return res.status(400).json({
+            success: false,
+            message: "Each milestone must have a heading and amount",
+          });
+        }
+      }
+    }
+
     // Create new batch
     const newBatch = new Batch({
       contractTitle,
@@ -46,6 +60,7 @@ const createBatch = async (req, res) => {
       contractorName,
       contractorId,
       status,
+      milestones: milestones || []
     });
 
     await newBatch.save();
@@ -226,38 +241,63 @@ const updateWorkDetails = async (req, res) => {
         message: "Batch not found",
       });
     }
+
+    // Validate work status progression
+    const validStatuses = ["pending", "30_percent", "80_percent", "completed"];
+    const currentIndex = validStatuses.indexOf(batch.workStatus);
+    const newIndex = validStatuses.indexOf(workStatus);
+
+    if (newIndex < currentIndex) {
+      return res.status(400).json({
+        success: false,
+        message: "Cannot revert to a previous work status",
+      });
+    }
+
     const previousStatus = batch.workStatus;
     batch.workStatus = workStatus;
     batch.workDetails = workDetails;
 
-    // If work status changed to completed, record the completion time
-    if (workStatus === "completed" && previousStatus !== "completed") {
-      batch.completedAt = new Date();
-      // Trigger Pusher notification
-      await pusher.trigger("admin-channel", "work-completed", {
-        message: `${batch.contractorName} has finished ${batch.contractTitle}`,
-        batchId: batch._id,
-        contractorName: batch.contractorName,
-        batchTitle: batch.contractTitle,
-        completedAt: batch.completedAt,
-      });
+    // Handle notifications based on work status changes
+    if (workStatus !== previousStatus) {
+      let notificationMessage = "";
+      
+      switch (workStatus) {
+        case "30_percent":
+          notificationMessage = `${batch.contractorName} has completed 30% of ${batch.contractTitle}`;
+          break;
+        case "80_percent":
+          notificationMessage = `${batch.contractorName} has completed 80% of ${batch.contractTitle}`;
+          break;
+        case "completed":
+          batch.completedAt = new Date();
+          notificationMessage = `${batch.contractorName} has completed ${batch.contractTitle}`;
+          break;
+      }
 
-      await pusher.trigger(
-        `agency-channel`,
-        `work-completed-${batch.agencyId}`,
-        {
-          //id so that notification is sent to that particular agency
-          id: `work-${Date.now()}`, // Add an ID for the notification
-          message: `${batch.contractorName} has finished ${batch.contractTitle}`,
+      if (notificationMessage) {
+        // Notify admin
+        await pusher.trigger("admin-channel", "work-status-update", {
+          message: notificationMessage,
           batchId: batch._id,
           contractorName: batch.contractorName,
           batchTitle: batch.contractTitle,
-          completedAt: batch.completedAt,
+          workStatus: workStatus,
           timestamp: new Date().toISOString(),
-          type: "work-completion",
-        }
-      );
-      // console.log('Pusher notification sent successfully');
+        });
+
+        // Notify agency
+        await pusher.trigger(`agency-channel`, `work-status-update-${batch.agencyId}`, {
+          id: `work-${Date.now()}`,
+          message: notificationMessage,
+          batchId: batch._id,
+          contractorName: batch.contractorName,
+          batchTitle: batch.contractTitle,
+          workStatus: workStatus,
+          timestamp: new Date().toISOString(),
+          type: "work-status-update",
+        });
+      }
     }
 
     await batch.save();

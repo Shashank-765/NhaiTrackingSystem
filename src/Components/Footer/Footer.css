@@ -87,12 +87,12 @@
 }
 
 .contract-chain-nhai {
+  position:static;
   background-color:#001f3f;
   color: white;
   text-align: center;
   padding: 4rem 0;
   width: 100%;
-  position: relative;
 }
 
 .contract-chain-nhai p {

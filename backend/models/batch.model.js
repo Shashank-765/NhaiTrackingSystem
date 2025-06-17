@@ -54,7 +54,7 @@ const batchSchema = new mongoose.Schema(
     },
     workStatus: {
       type: String,
-      enum: ["pending", "completed"],
+      enum: ["pending", "30_percent", "80_percent", "completed"],
       default: "pending",
     },
     workApproved: {
@@ -136,6 +136,22 @@ const batchSchema = new mongoose.Schema(
     nhaiToContractorPaymentMedia: {
       type: String,
     },
+    // Add milestone fields
+    milestones: [{
+      heading: {
+        type: String,
+        required: true
+      },
+      amount: {
+        type: Number,
+        required: true
+      },
+      status: {
+        type: String,
+        enum: ["pending", "completed"],
+        default: "pending"
+      }
+    }]
   },
   {
     timestamps: true,

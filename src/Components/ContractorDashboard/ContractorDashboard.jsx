@@ -214,7 +214,7 @@ const ContractorDashboard = () => {
         >
           <div
             style={{
-              backgroundColor: "red",
+              backgroundColor: "white",
               padding: "20px",
               borderRadius: "8px",
               maxHeight: "90vh",

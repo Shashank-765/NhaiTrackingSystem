@@ -687,7 +687,7 @@ html {
   background-color: #3b82f6;
   transform: translateX(-50%);
 }
-.timeline-item {
+.timeline-item1 {
   display: flex;
   justify-content: space-between; /* Space between left/right content */
   margin-bottom: 3rem;
@@ -697,7 +697,7 @@ html {
  width:100% !important;
 }
 
-.timeline-item:nth-child(even) {
+.timeline-item1:nth-child(even) {
   flex-direction: row-reverse; /* Alternate content sides */
 }
 
@@ -722,7 +722,7 @@ html {
   line-height: 1.5;
 }
 
-.timeline-item:nth-child(odd) .timeline-content {
+.timeline-item1:nth-child(odd) .timeline-content {
   width:90%;
   text-align: right;
   position:absolute;
@@ -730,7 +730,7 @@ html {
    /* Align text right for left-side content */
 }
 
-.timeline-item:nth-child(even) .timeline-content {
+.timeline-item1:nth-child(even) .timeline-content {
   text-align: left;
   position:absolute;
   width:90%;
@@ -889,14 +889,14 @@ html {
     font-size: 18px;
   }
 
-  .timeline-item:nth-child(odd) .timeline-content {
+  .timeline-item1:nth-child(odd) .timeline-content {
     width: 50%;
     text-align: right;
     position: absolute;
     right: 505px;
   }
 
-  .timeline-item:nth-child(even) .timeline-content {
+  .timeline-item1:nth-child(even) .timeline-content {
     width: 50%;
     text-align: right;
     position: absolute;
@@ -939,14 +939,14 @@ html {
     font-size: 16px;
   }
 
-  .timeline-item:nth-child(odd) .timeline-content {
+  .timeline-item1:nth-child(odd) .timeline-content {
     width: 50%;
     text-align: right;
     position: absolute;
     right: 430px;
   }
 
-  .timeline-item:nth-child(even) .timeline-content {
+  .timeline-item1:nth-child(even) .timeline-content {
     width: 50%;
     text-align: right;
     position: absolute;
@@ -989,15 +989,15 @@ html {
     font-size: 15px;
   }
 
-  .timeline-item:nth-child(odd) .timeline-content {
-    width: 45%;
+  .timeline-item1:nth-child(odd) .timeline-content {
+    width: 46%;
     text-align: right;
     position: absolute;
     right: 430px;
   }
 
-  .timeline-item:nth-child(even) .timeline-content {
-    width: 45%;
+  .timeline-item1:nth-child(even) .timeline-content {
+    width: 46%;
     text-align: right;
     position: absolute;
     left: 430px;
@@ -1039,13 +1039,13 @@ html {
     font-size: 15px;
   }
 
-  .timeline-item:nth-child(odd) .timeline-content {
+  .timeline-item1:nth-child(odd) .timeline-content {
     width: 44%;
     text-align: right;
     position: absolute;
     right: 330px;
   }
-  .timeline-item:nth-child(even) .timeline-content {
+  .timeline-item1:nth-child(even) .timeline-content {
     width: 44%;
     text-align: right;
     position: absolute;
@@ -1071,3 +1071,34 @@ html {
   }
 }
 
+@media (max-width: 576px) {
+  .info-box p {
+      font-size: 8px;
+  }
+  .why-contractchain-section .section-content {
+    width: 60%;
+    text-align: left;
+}
+.timeline-item1:nth-child(odd) .timeline-content {
+  width: 60%;
+  text-align: right;
+  position: absolute;
+  right: 240px;
+}
+.timeline-item1:nth-child(even) .timeline-content {
+  width: 60%;
+  text-align: right;
+  position: absolute;
+  left: 240px;
+}
+.platform-features-section, .use-case-section{
+  text-align: center;
+  width: 90%;
+  margin: auto;
+  border-radius: 1rem;
+  padding: 1rem 0rem;
+}
+.section-heading {
+  font-size:28px;
+}
+}

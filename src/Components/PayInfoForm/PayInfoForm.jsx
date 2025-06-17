@@ -199,7 +199,9 @@ const PayInfoForm = ({ batchId, onClose, onSuccess }) => {
             <label>Amount</label>
             <input
               type="text"
-              value={`₹${batch.contractorValue.toLocaleString()}`}
+              value={`₹${user.role.toLowerCase() === 'agency' 
+                ? batch.bidValue.toLocaleString() 
+                : batch.contractorValue.toLocaleString()}`}
               disabled
             />
           </div>

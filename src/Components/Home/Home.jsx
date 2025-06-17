@@ -36,28 +36,6 @@ const Home = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 1 }}
         >
-          <div className="hero-content">
-            <h2 className="hero-sub-title"><img src={logo} alt="ContractChain NHAI Logo" className="home-logo-image" /> ContractChain NHAI</h2>
-            <h1 className="hero-main-title">Transparent Infrastructure<br></br> Project Tracking with</h1>
-            <h1><b style={{ color: "#ffde21", fontSize: "60px" }}>Hyperledger Fabric</b></h1>
-            <p className="hero-tagline">Digitize. Track. Trust.</p>
-            <p className="hero-description">ContractChain empowers NHAI, Agencies, and Contractors with a secure, <br></br>blockchain-based platform to manage infrastructure projects from initiation to<br></br> execution.</p>
-            <div className="info-boxes">
-              <div className="info-box">
-                <p>🔗 Powered by Hyperledger Fabric</p>
-              </div>
-              <div className="info-box">
-                <p>🔍 100% Transparent</p>
-              </div>
-              <div className="info-box">
-                <p>🔐 Role-Based Access</p>
-              </div>
-            </div>
-            <div className="hero-buttons">
-              <a href="#" className="btn primary">Get Started</a>
-              <a href="#" className="btn secondary">Watch Demo</a>
-            </div>
-          </div>
           <div className="hero-image-container">
             <img src={imageBanner} alt="Infrastructure Project Tracking Dashboard" className="hero-image" />
           </div>
@@ -223,35 +201,35 @@ const Home = () => {
             <h3 className="section-heading">How It Works - Real Example</h3>
             <p className="how-it-works-subtitle">Follow a contract through its complete lifecycle</p>
             <div className="process-timeline">
-              <div className="timeline-item">
+              <div className="timeline-item1">
                 <div className="timeline-content">
                   <h4>NHAI creates  contract</h4>
                   <p>Project initiated and contract terms defined</p>
                 </div>
                 <div className="timeline-dot"></div>
               </div>
-              <div className="timeline-item">
+              <div className="timeline-item1">
                 <div className="timeline-content">
                   <h4>Links Agency X & Contractor Y</h4>
                   <p>Stakeholders onboarded to the platform</p>
                 </div>
                 <div className="timeline-dot"></div>
               </div>
-              <div className="timeline-item">
+              <div className="timeline-item1">
                 <div className="timeline-content">
                   <h4>Agency funds – Admin verifies</h4>
                   <p>Funding secured and verified on blockchain</p>
                 </div>
                 <div className="timeline-dot"></div>
               </div>
-              <div className="timeline-item">
+              <div className="timeline-item1">
                 <div className="timeline-content">
                   <h4>Contractor completes Phase 1</h4>
                   <p>Milestone achieved and documented</p>
                 </div>
                 <div className="timeline-dot"></div>
               </div>
-              <div className="timeline-item">
+              <div className="timeline-item1">
                 <div className="timeline-content">
                   <h4>Payment auto-released</h4>
                   <p>Smart contract triggers automatic payment</p>
