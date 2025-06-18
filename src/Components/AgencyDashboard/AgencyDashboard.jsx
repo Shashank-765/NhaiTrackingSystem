@@ -37,12 +37,27 @@ const AgencyDashboard = () => {
 
   const handlePayInfoForm = (batchId) => {
     const batch = batches.find((batch) => batch._id === batchId);
-    if(batch.agencyToNhaiPaymentStatus.toLowerCase() == 'completed'){
-      toast.warning('Payment is already done',{
+    
+    // Check if payment is already done
+    if(batch.agencyToNhaiPaymentStatus.toLowerCase() === 'completed'){
+      toast.warning('Payment is already done', {
         autoClose: 1000,
       });
       return;
     }
+
+    // Check if any milestone is completed
+    const hasCompletedMilestone = batch.milestones?.some(
+      milestone => milestone.workStatus?.toLowerCase() === 'completed'
+    );
+
+    if (!hasCompletedMilestone) {
+      toast.warning('At least one milestone must be completed before payment', {
+        autoClose: 2000,
+      });
+      return;
+    }
+
     setPayInfoForm({ isOpen: !payInfoForm.isOpen, batchId });
   };
 
@@ -194,7 +209,6 @@ const AgencyDashboard = () => {
                 <th>Title</th>
                 {/* <th>Contractor Name</th> */}
                 <th>Bid Amount</th>
-                <th>Duration</th>
                 <th>Status</th>
                 <th>Pay to NHAI</th>
                 <th>Info</th>
@@ -220,7 +234,6 @@ const AgencyDashboard = () => {
                     <td>{batch.contractTitle}</td>
                     {/* <td>{batch.contractorName}</td> */}
                     <td>₹{batch.bidValue}</td>
-                    <td>{batch.bidDuration}</td>
                     <td>
                       {/* <button
                         type="button"
@@ -245,7 +258,16 @@ const AgencyDashboard = () => {
                         {batch.status === "pending" ? "Pending" : "Approved"}
                       </button>
                     </td>
-                    <td><button type="button" className="payinfo-button" disabled={!batch.workApproved} onClick={() => handlePayInfoForm(batch._id)}>Pay to NHAI</button></td>
+                    <td>
+                      <button 
+                        type="button" 
+                        className="payinfo-button" 
+                        disabled={!batch.milestones?.some(m => m.workStatus?.toLowerCase() === 'completed')} 
+                        onClick={() => handlePayInfoForm(batch._id)}
+                      >
+                        Pay to NHAI
+                      </button>
+                    </td>
                     <td>
                       <img
                         src={infoIcon}

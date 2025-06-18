@@ -39,12 +39,35 @@ const createBatch = async (req, res) => {
     // Validate milestones if provided
     if (milestones && Array.isArray(milestones)) {
       for (const milestone of milestones) {
-        if (!milestone.heading || !milestone.amount) {
+        // Check required fields
+        if (!milestone.heading || !milestone.amount || !milestone.startDate || !milestone.endDate || !milestone.contractorId || !milestone.contractorName) {
           return res.status(400).json({
             success: false,
-            message: "Each milestone must have a heading and amount",
+            message: "Each milestone must have a heading, amount, start date, end date, and contractor information",
           });
         }
+
+        // Validate dates
+        const startDate = new Date(milestone.startDate);
+        const endDate = new Date(milestone.endDate);
+
+        if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+          return res.status(400).json({
+            success: false,
+            message: "Invalid date format for milestone dates",
+          });
+        }
+
+        if (endDate < startDate) {
+          return res.status(400).json({
+            success: false,
+            message: "End date must be after start date for each milestone",
+          });
+        }
+
+        // Convert string dates to Date objects
+        milestone.startDate = startDate;
+        milestone.endDate = endDate;
       }
     }
 
@@ -318,8 +341,10 @@ const updateWorkDetails = async (req, res) => {
 
 const approveWork = async (req, res) => {
   try {
-    const batch = await Batch.findById(req.params.id);
+    const { id } = req.params;
+    const { milestoneIndex } = req.body;
 
+    const batch = await Batch.findById(id);
     if (!batch) {
       return res.status(404).json({
         success: false,
@@ -327,34 +352,65 @@ const approveWork = async (req, res) => {
       });
     }
 
-    if (batch.workStatus !== "completed") {
+    // Validate milestone index
+    if (milestoneIndex === undefined || !batch.milestones[milestoneIndex]) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid milestone index",
+      });
+    }
+
+    const milestone = batch.milestones[milestoneIndex];
+
+    if (milestone.workStatus !== "completed") {
       return res.status(400).json({
         success: false,
         message: "Cannot approve work that is not completed",
       });
     }
-    batch.workApproved = true;
+
+    // Update work approval for specific milestone
+    milestone.workApproved = true;
+    milestone.completedAt = new Date();
     await batch.save();
 
     // Trigger notification to contractor
     await pusher.trigger(
       "contractor-channel",
-      `work-approved-${batch.contractorId}`,
+      `work-approved-${milestone.contractorId}`,
       {
         id: `app-${Date.now()}`,
-        message: `Your work for ${batch.contractTitle} has been approved. You can now download the invoice.`,
+        message: `Your work for milestone "${milestone.heading}" in ${batch.contractTitle} has been approved.`,
         timestamp: new Date().toISOString(),
         type: "work-approval",
         batchId: batch._id,
+        milestoneIndex: milestoneIndex,
+        milestoneHeading: milestone.heading
       }
     );
 
-    await pusher.trigger("agency-channel", `work-approved-${batch.agencyId}`, {
+    // Notify admin
+    await pusher.trigger("admin-channel", "work-approved", {
       id: `app-${Date.now()}`,
-      message: `Batch work for ${batch.contractTitle} has been approved.`,
+      message: `Work for milestone "${milestone.heading}" in ${batch.contractTitle} has been approved.`,
       timestamp: new Date().toISOString(),
       type: "work-approval",
       batchId: batch._id,
+      contractorName: milestone.contractorName,
+      milestoneIndex: milestoneIndex,
+      milestoneHeading: milestone.heading
+    });
+
+    // Notify agency
+    await pusher.trigger(`agency-channel`, `work-approved-${batch.agencyId}`, {
+      id: `app-${Date.now()}`,
+      message: `Work for milestone "${milestone.heading}" in ${batch.contractTitle} has been approved.`,
+      timestamp: new Date().toISOString(),
+      type: "work-approval",
+      batchId: batch._id,
+      contractorName: milestone.contractorName,
+      milestoneIndex: milestoneIndex,
+      milestoneHeading: milestone.heading
     });
 
     res.status(200).json({
@@ -363,6 +419,7 @@ const approveWork = async (req, res) => {
       data: batch,
     });
   } catch (error) {
+    console.error("Error in approveWork:", error);
     res.status(500).json({
       success: false,
       message: error.message,
@@ -413,7 +470,7 @@ const downloadInvoice = async (req, res) => {
 const updatePaymentInfo = async (req, res) => {
   try {
     const { id } = req.params;
-    const { transactionId, transactionDate, transactionType } = req.body;
+    const { transactionId, transactionDate, transactionType, milestoneIndex } = req.body;
 
     const batch = await Batch.findById(id);
     if (!batch) {
@@ -431,7 +488,7 @@ const updatePaymentInfo = async (req, res) => {
       }
       batch.agencyToNhaiPaymentStatus = "completed";
 
-      // Add notification for admin when agency pays NHAI
+      // Send notification to admin
       await pusher.trigger("admin-channel", "agency-payment-received", {
         id: `agency-payment-${Date.now()}`,
         message: `Payment received from ${batch.agencyName} for contract: ${batch.contractTitle}`,
@@ -443,47 +500,87 @@ const updatePaymentInfo = async (req, res) => {
         amount: batch.bidValue
       });
     } else if(transactionType === 'nhai_to_contractor') {
-      batch.nhaiToContractorTransactionId = transactionId;
-      batch.nhaiToContractorTransactionDate = transactionDate;
-      if (req.file) {
-        batch.nhaiToContractorPaymentMedia = `/payment-media/${req.file.filename}`;
+      // Validate milestone index
+      if (milestoneIndex === undefined || !batch.milestones[milestoneIndex]) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid milestone index",
+        });
       }
-      batch.nhaiToContractorPaymentStatus = "completed";
+
+      const milestone = batch.milestones[milestoneIndex];
+
+      // Check if the milestone's work is completed and approved
+      if (milestone.workStatus !== "completed") {
+        return res.status(400).json({
+          success: false,
+          message: "Cannot make payment for incomplete work",
+        });
+      }
+console.log(milestone.workApproved,"bbbbbbbb");  
+      if (!milestone.workApproved) {
+        return res.status(400).json({
+          success: false,
+          message: "Cannot make payment for unapproved work",
+        });
+      }
+
+      // Check if payment is already made for this milestone
+      if (milestone.nhaiToContractorPaymentStatus === "completed") {
+        return res.status(400).json({
+          success: false,
+          message: "Payment already made for this milestone",
+        });
+      }
+
+      // Update payment info for specific milestone
+      milestone.nhaiToContractorTransactionId = transactionId;
+      milestone.nhaiToContractorTransactionDate = transactionDate;
+      if (req.file) {
+        milestone.nhaiToContractorPaymentMedia = `/payment-media/${req.file.filename}`;
+      }
+      milestone.nhaiToContractorPaymentStatus = "completed";
+
+      // Send notification to contractor
+      await pusher.trigger(
+        "contractor-channel",
+        `payment-completed-${milestone.contractorId}`,
+        {
+          id: `pay-${Date.now()}`,
+          message: `Payment completed for your milestone "${milestone.heading}" in ${batch.contractTitle}`,
+          timestamp: new Date().toISOString(),
+          type: "payment",
+          batchId: batch._id,
+          milestoneIndex: milestoneIndex,
+          milestoneHeading: milestone.heading,
+          amount: milestone.amount
+        }
+      );
+
+      // Send notification to admin
+      await pusher.trigger("admin-channel", "contractor-payment-sent", {
+        id: `contractor-payment-${Date.now()}`,
+        message: `Payment sent to ${milestone.contractorName} for milestone "${milestone.heading}" in ${batch.contractTitle}`,
+        timestamp: new Date().toISOString(),
+        type: "contractor-payment",
+        batchId: batch._id,
+        contractorName: milestone.contractorName,
+        contractTitle: batch.contractTitle,
+        milestoneHeading: milestone.heading,
+        amount: milestone.amount
+      });
     }
-    // batch.transactionTime = new Date();
-    // batch.paymentStatus = "completed";
-
-    batch.updatedAt = new Date();
-    
-
-    // Handle media upload
-    // if (req.file) {
-    //   batch.paymentMedia = `/payment-media/${req.file.filename}`;
-    // }
 
     await batch.save();
 
-    // Send notification to agency about payment completion
+    // Send notification to admin
     await pusher.trigger("admin-channel", `batch-approved-${batch.adminId}`, {
       id: `batch-approved-${Date.now()}`,
-      message: `Contract for ${batch.contractTitle} has been given to ${batch.contractorName}!`,
+      message: `Payment completed for ${batch.contractTitle}`,
       timestamp: new Date().toISOString(),
       type: "payment",
       batchId: batch._id,
     });
-
-    // Send notification to contractor about payment completion
-    // await pusher.trigger(
-    //   "contractor-channel",
-    //   `payment-completed-${batch.contractorId}`,
-    //   {
-    //     id: `pay-${Date.now()}`,
-    //     message: `Payment completed for your work on ${batch.contractTitle}`,
-    //     timestamp: new Date().toISOString(),
-    //     type: "payment",
-    //     batchId: batch._id,
-    //   }
-    // );
 
     res.status(200).json({
       success: true,
@@ -499,6 +596,71 @@ const updatePaymentInfo = async (req, res) => {
   }
 };
 
+const updateMilestoneStatus = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { milestoneIndex, workStatus, workDetails } = req.body;
+
+    const batch = await Batch.findById(id);
+    if (!batch) {
+      return res.status(404).json({
+        success: false,
+        message: "Batch not found",
+      });
+    }
+
+    // Validate milestone index
+    if (!batch.milestones[milestoneIndex]) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid milestone index",
+      });
+    }
+
+    // Update milestone status
+    batch.milestones[milestoneIndex].workStatus = workStatus;
+    batch.milestones[milestoneIndex].workDetails = workDetails;
+
+    await batch.save();
+
+    // Send notification to admin
+    await pusher.trigger("admin-channel", "milestone-status-update", {
+      message: `Milestone status updated for ${batch.contractTitle}`,
+      batchId: batch._id,
+      contractorName: batch.contractorName,
+      batchTitle: batch.contractTitle,
+      milestoneIndex: milestoneIndex,
+      workStatus: workStatus,
+      timestamp: new Date().toISOString(),
+    });
+
+    // Send notification to agency
+    await pusher.trigger(`agency-channel`, `milestone-status-update-${batch.agencyId}`, {
+      id: `milestone-${Date.now()}`,
+      message: `Milestone status updated for ${batch.contractTitle}`,
+      batchId: batch._id,
+      contractorName: batch.contractorName,
+      batchTitle: batch.contractTitle,
+      milestoneIndex: milestoneIndex,
+      workStatus: workStatus,
+      timestamp: new Date().toISOString(),
+      type: "milestone-status-update",
+    });
+
+    res.status(200).json({
+      success: true,
+      message: "Milestone status updated successfully",
+      data: batch,
+    });
+  } catch (error) {
+    console.error("Error in updateMilestoneStatus:", error);
+    res.status(500).json({
+      success: false,
+      message: "Error updating milestone status",
+    });
+  }
+};
+
 module.exports = {
   createBatch,
   getAllBatches,
@@ -508,4 +670,5 @@ module.exports = {
   approveWork,
   downloadInvoice,
   updatePaymentInfo,
+  updateMilestoneStatus,
 };

@@ -70,7 +70,9 @@ const BatchForm = ({ handleCloseBatchForm }) => {
           contractorId: '',
           amount: '',
           heading: '',
-          status: 'pending'
+          status: 'pending',
+          startDate: '',
+          endDate: ''
         };
       }
       updatedMilestones[index] = {
@@ -93,7 +95,9 @@ const BatchForm = ({ handleCloseBatchForm }) => {
       contractorId: "",
       amount: "",
       heading: "",
-      status: "pending"
+      status: "pending",
+      startDate: "",
+      endDate: ""
     }));
     
     setFormData(prev => ({
@@ -113,10 +117,39 @@ const BatchForm = ({ handleCloseBatchForm }) => {
     e.preventDefault();
     try {
       const selectedAgency = agencies.find(a => a._id === formData.agency);
-      const selectedContractor = contractors.find(c => c._id === formData.contractor);
 
-      if (!selectedAgency || !selectedContractor) {
-        toast.error('Please select both agency and contractor');
+      if (!selectedAgency) {
+        toast.error('Please select an agency');
+        return;
+      }
+
+      // Validate milestones
+      if (formData.milestones.length > 0) {
+        for (const milestone of formData.milestones) {
+          if (!milestone.heading || !milestone.contractorId || !milestone.amount || !milestone.startDate || !milestone.endDate) {
+            toast.error('Please fill all required fields in milestones');
+            return;
+          }
+
+          // Validate dates
+          const startDate = new Date(milestone.startDate);
+          const endDate = new Date(milestone.endDate);
+          
+          if (endDate < startDate) {
+            toast.error('End date must be after start date for each milestone');
+            return;
+          }
+
+          // Get contractor name for the milestone
+          const milestoneContractor = contractors.find(c => c._id === milestone.contractorId);
+          if (!milestoneContractor) {
+            toast.error('Invalid contractor selected for milestone');
+            return;
+          }
+          milestone.contractorName = milestoneContractor.name;
+        }
+      } else {
+        toast.error('Please add at least one milestone');
         return;
       }
 
@@ -128,10 +161,16 @@ const BatchForm = ({ handleCloseBatchForm }) => {
         bidDuration: formData.ContractDuration,
         agencyId: selectedAgency._id,
         agencyName: selectedAgency.name,
-        contractorId: selectedContractor._id,
-        contractorName: selectedContractor.name,
         status: formData.status,
-        milestones: formData.milestones
+        milestones: formData.milestones.map(milestone => ({
+          heading: milestone.heading,
+          contractorId: milestone.contractorId,
+          contractorName: milestone.contractorName,
+          amount: parseFloat(milestone.amount),
+          startDate: milestone.startDate,
+          endDate: milestone.endDate,
+          status: milestone.status
+        }))
       };
 
       const response = await fetch(
@@ -149,58 +188,67 @@ const BatchForm = ({ handleCloseBatchForm }) => {
       const data = await response.json();
 
       if (data.success) {
-          const newbatch3 = {
+        // Create a map of contractors and their milestones
+        const contractorMilestones = {};
+        formData.milestones.forEach((milestone, index) => {
+          if (!contractorMilestones[milestone.contractorId]) {
+            contractorMilestones[milestone.contractorId] = {
+              contractorId: milestone.contractorId,
+              contractorName: milestone.contractorName,
+              contractorAmount: 0,
+              milestonesAssigned: []
+            };
+          }
+          contractorMilestones[milestone.contractorId].contractorAmount += parseFloat(milestone.amount);
+          contractorMilestones[milestone.contractorId].milestonesAssigned.push(index + 1);
+        });
+
+        const newbatch3 = {
           batchId: data?.data?._id,
           contractId: data?.data?.contractId,
-          contractName: data?.data?.contractorName,
+          contractName: data?.data?.contractTitle,
           contractLocation: data?.data?.contractLocation || 'noida',
           actualAmount: data?.data?.contractorValue || '0',
           totalDuration: data?.data?.bidDuration || '0',
-          numberofmilestones: data?.data?.numberofmilestones || 6,
-            milestones: [
-              {
-                "milestoneNo": 2,
-                "amount": 500000,
-                "description": "Initial ground work",
-                "lastDate": "2025-08-01",
-                "nhaiPaymentDetail": {
-                  "transactionId": "",
-                  "status": "",
-                  "remark": "",
-                  "paymentDate": "",
-                  "invoiced": false
-                },
-                "agencyPaymentDetail": {
-                  "transactionId": "",
-                  "status": "",
-                  "remark": "",
-                  "paymentDate": "",
-                  "invoiced": false
-                },
-                "status": "PENDING"
-              }
-            ],
-            contractors: [
-              {
-                contractorId: selectedContractor ? selectedContractor._id : '',
-                contractorAmount: parseFloat(formData.ContractorAmount),
-                milestonesAssigned: [1, 2],
-                paymentApproved: false
-              }
-            ]
-        }
-         const response = await fetch(
-        `${import.meta.env.VITE_API_URL2}/batch`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(newbatch3)
-        }
-      );
-      
+          numberofmilestones: formData.milestones.length,
+          milestones: formData.milestones.map((milestone, index) => ({
+            milestoneNo: index + 1,
+            amount: parseFloat(milestone.amount),
+            description: milestone.heading,
+            lastDate: milestone.endDate,
+            nhaiPaymentDetail: {
+              transactionId: "",
+              status: "",
+              remark: "",
+              paymentDate: "",
+              invoiced: false
+            },
+            agencyPaymentDetail: {
+              transactionId: "",
+              status: "",
+              remark: "",
+              paymentDate: "",
+              invoiced: false
+            },
+            status: "PENDING"
+          })),
+          contractors: Object.values(contractorMilestones).map(contractor => ({
+            ...contractor,
+            paymentApproved: false
+          }))
+        };
 
+        const response2 = await fetch(
+          `${import.meta.env.VITE_API_URL2}/batch`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(newbatch3)
+          }
+        );
+        
         toast.success('Batch created successfully');
         handleCloseBatchForm();
       } else {
@@ -224,8 +272,70 @@ const BatchForm = ({ handleCloseBatchForm }) => {
   }, []);
 
   return (
-    <div className="overlay">
-      <form className="batch-form" onSubmit={handleSubmit}>
+    <div className="overlay" style={{
+      position: 'fixed',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      backgroundColor: 'rgba(0, 0, 0, 0.5)',
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+      zIndex: 1000,
+      padding: '20px',
+      overflowY: 'auto'
+    }}>
+      <form className="batch-form" onSubmit={handleSubmit} style={{
+        backgroundColor: 'white',
+        padding: '30px',
+        borderRadius: '8px',
+        boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+        width: '100%',
+        maxWidth: '800px',
+        maxHeight: '90vh',
+        overflowY: 'auto',
+        position: 'relative',
+        scrollbarWidth: 'thin',
+        scrollbarColor: '#888 #f1f1f1'
+      }}>
+        <style>
+          {`
+            .batch-form::-webkit-scrollbar {
+              width: 8px;
+            }
+            .batch-form::-webkit-scrollbar-track {
+              background: #f1f1f1;
+              border-radius: 4px;
+            }
+            .batch-form::-webkit-scrollbar-thumb {
+              background: #888;
+              border-radius: 4px;
+            }
+            .batch-form::-webkit-scrollbar-thumb:hover {
+              background: #555;
+            }
+            .milestone-form {
+              maxHeight: 60vh;
+              overflowY: 'auto';
+              paddingRight: 10px;
+            }
+            .milestone-form::-webkit-scrollbar {
+              width: 6px;
+            }
+            .milestone-form::-webkit-scrollbar-track {
+              background: #f1f1f1;
+              border-radius: 3px;
+            }
+            .milestone-form::-webkit-scrollbar-thumb {
+              background: #ccc;
+              border-radius: 3px;
+            }
+            .milestone-form::-webkit-scrollbar-thumb:hover {
+              background: #999;
+            }
+          `}
+        </style>
         <h2>Add Batch</h2>
         <input
           type="text"
@@ -277,7 +387,7 @@ const BatchForm = ({ handleCloseBatchForm }) => {
             onClick={() => setShowMilestoneForm(!showMilestoneForm)}
             className="milestone-btn"
           >
-            Add Milestones
+            No. of Milestones
           </button>
           <input
             type="number"
@@ -291,21 +401,46 @@ const BatchForm = ({ handleCloseBatchForm }) => {
         </div>
 
         {showMilestoneForm && (
-          <div className="milestone-form">
+          <div className="milestone-form" style={{
+            marginTop: '20px',
+            marginBottom: '20px',
+            border: '1px solid #e0e0e0',
+            borderRadius: '8px',
+            padding: '20px',
+            backgroundColor: '#f9f9f9'
+          }}>
             {formData.milestones.map((milestone, index) => (
-              <div key={index} className="milestone-section">
+              <div key={index} className="milestone-section" style={{
+                marginBottom: '15px',
+                border: '1px solid #ddd',
+                borderRadius: '6px',
+                overflow: 'hidden',
+                backgroundColor: 'white'
+              }}>
                 <div 
                   className="milestone-header"
                   onClick={() => toggleMilestone(index)}
+                  style={{
+                    padding: '12px 15px',
+                    backgroundColor: '#f5f5f5',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    borderBottom: expandedMilestones[index] ? '1px solid #ddd' : 'none'
+                  }}
                 >
-                  <h3>Milestone {index + 1}</h3>
-                  <span className="toggle-icon">
+                  <h3 style={{ margin: 0, fontSize: '16px', fontWeight: '600' }}>Milestone {index + 1}</h3>
+                  <span className="toggle-icon" style={{ fontSize: '12px', fontWeight: 'bold' }}>
                     {expandedMilestones[index] ? '▼' : '▲'}
                   </span>
                 </div>
                 
                 {expandedMilestones[index] && (
-                  <div className="milestone-content">
+                  <div className="milestone-content" style={{
+                    padding: '20px',
+                    backgroundColor: 'white'
+                  }}>
                     <div className="form-group">
                       <label>Heading:</label>
                       <input
@@ -332,12 +467,32 @@ const BatchForm = ({ handleCloseBatchForm }) => {
                     </div>
                     
                     <div className="form-group">
-                      <label>Amount:</label>
+                      <label>Contractor Amount:</label>
                       <input
                         type="number"
                         value={milestone.amount}
                         onChange={(e) => handleMilestoneChange(index, 'amount', e.target.value)}
                         placeholder="Enter milestone amount"
+                      />
+                    </div>
+                    
+                    <div className="form-group">
+                      <label>Start Date:</label>
+                      <input
+                        type="date"
+                        value={milestone.startDate}
+                        onChange={(e) => handleMilestoneChange(index, 'startDate', e.target.value)}
+                        required
+                      />
+                    </div>
+
+                    <div className="form-group">
+                      <label>End Date:</label>
+                      <input
+                        type="date"
+                        value={milestone.endDate}
+                        onChange={(e) => handleMilestoneChange(index, 'endDate', e.target.value)}
+                        required
                       />
                     </div>
                     

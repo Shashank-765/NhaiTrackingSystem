@@ -19,6 +19,7 @@ const ContractorDashboard = () => {
   const [selectedInvoice, setSelectedInvoice] = useState(null);
   const [selectedBatchInfo, setSelectedBatchInfo] = useState(null);
   const [refreshTrigger, setRefreshTrigger] = useState(false);
+  const [selectedMilestoneIndices, setSelectedMilestoneIndices] = useState({});
 
   const navigate = useNavigate();
 
@@ -42,14 +43,11 @@ const ContractorDashboard = () => {
       const data = await response.json();
 
       if (data.success) {
-        // Filter batches for the current contractor
-        console.log("Batches fetched successfully:", data.data);
-        console.log("Current user ID:", user);
+        // Filter batches for the current contractor and get their milestones
         const contractorBatches = data.data.filter(
-          (batch) => batch.contractorId === user.id && batch.status === "approved"
+          (batch) => batch.milestones?.some(milestone => milestone.contractorId === user.id) && batch.status === "approved"
         );
         setBatches(contractorBatches);
-        console.log("Filtered batches for contractor:", contractorBatches);
       } else {
         toast.error("Error fetching contracts");
       }
@@ -60,16 +58,25 @@ const ContractorDashboard = () => {
     }
   };
   const handleContractorBatchForm = async (batch) => {
-    setContractorBatchForm(batch || false);
-    if (!batch) {
-      // Form was closed, refresh the data
-      await fetchBatches();
+    // Find the specific milestone for this contractor
+    const contractorMilestones = batch.milestones?.filter(m => m.contractorId === user.id) || [];
+    const selectedMilestoneIndex = selectedMilestoneIndices[batch._id] || 0;
+    const contractorMilestone = contractorMilestones[selectedMilestoneIndex];
+    
+    if (contractorMilestone) {
+      setContractorBatchForm({
+        ...batch,
+        selectedMilestone: contractorMilestone,
+        selectedMilestoneIndex: selectedMilestoneIndex
+      });
+    } else {
+      setContractorBatchForm(false);
     }
   };
   const refreshBatchInfo = () => setRefreshTrigger(prev => !prev);
   useEffect(() => {
     fetchBatches();
-  }, [user.id]);
+  }, [user.id, refreshTrigger]);
 
   const filteredBatches = batches.filter(
     (batch) =>
@@ -88,6 +95,38 @@ const ContractorDashboard = () => {
           autoClose: 1000,
         }
       );
+    }
+  };
+
+  const handleWorkStatusUpdate = async (batchId, milestoneIndex, newStatus) => {
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL}/${
+          import.meta.env.VITE_API_VERSION
+        }/batches/${batchId}/milestone-status`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+          body: JSON.stringify({
+            milestoneIndex,
+            workStatus: newStatus
+          }),
+        }
+      );
+
+      const data = await response.json();
+
+      if (data.success) {
+        toast.success(`Work status updated to ${newStatus}`);
+        fetchBatches(); // Refresh the data
+      } else {
+        toast.error(data.message || "Error updating work status");
+      }
+    } catch (error) {
+      toast.error("Server error. Please try again later.");
     }
   };
 
@@ -117,78 +156,113 @@ const ContractorDashboard = () => {
                 <th>Title</th>
                 <th>Agency Name</th>
                 <th>Admin</th>
-                {/* <th>Bid Amount</th> */}
-                <th>Contractor <br /> Amount</th>
-                <th>Duration</th>
+                <th>Contractor Amount</th>
+                <th>Start Date</th>
+                <th>End Date</th>
                 <th>Status</th>
                 <th>Invoice</th>
                 <th>Pay Info</th>
+                <th>Milestone</th>
               </tr>
             </thead>
             <tbody>
               {isLoading ? (
                 <tr>
-                  <td colSpan="8" style={{ textAlign: "center" }}>
+                  <td colSpan="11" style={{ textAlign: "center" }}>
                     Loading...
                   </td>
                 </tr>
               ) : filteredBatches.length === 0 ? (
                 <tr>
-                  <td colSpan="8" style={{ textAlign: "center" }}>
+                  <td colSpan="11" style={{ textAlign: "center" }}>
                     No contracts found
                   </td>
                 </tr>
               ) : (
-                filteredBatches.map((batch) => (
-                  <tr key={batch._id}>
-                    <td>{batch.contractId}</td>
-                    <td>{batch.contractTitle}</td>
-                    <td>{batch.agencyName}</td>
-                    <td>{batch.adminName || "Admin"}</td>
-                    {/* <td>₹{batch.bidValue}</td> */}
-                    <td>₹{batch.contractorValue || "N/A"}</td>
-                    <td>{batch.bidDuration}</td>
-                    <td>
-                      <button
-                        type="button"
-                        className="edit-btn"
-                        onClick={() => handleContractorBatchForm(batch)}
-                        disabled={batch.workStatus === "completed"}
-                        style={{
-                          opacity: batch.workStatus === "completed" ? 0.7 : 1,
-                          cursor:
-                            batch.workStatus === "completed"
-                              ? "not-allowed"
-                              : "pointer",
-                        }}
-                      >
-                        Edit
-                      </button>
-                    </td>
-                    <td>
-                      <img
-                        src={invoice}
-                        alt="invoice"
-                        className="invoice-icon"
-                        style={{
-                          opacity: batch.workApproved ? 1 : 0.7,
-                          cursor:
-                            batch.workApproved ? "pointer" : "not-allowed",
-                        }}
-                        onClick={() => handleInvoiceClick(batch)}
-                      />
-                    </td>
-                    <td>
-                      <img
-                        src={infoIcon}
-                        alt="info"
-                        className="info-icon"
-                        onClick={() => handleInfoClick(batch._id)}
-                        style={{ cursor: "pointer" }}
-                      />
-                    </td>
-                  </tr>
-                ))
+                filteredBatches.map((batch) => {
+                  const contractorMilestones = batch.milestones?.filter(m => m.contractorId === user.id) || [];
+                  const selectedMilestoneIndex = selectedMilestoneIndices[batch._id] || 0;
+                  const selectedMilestone = contractorMilestones[selectedMilestoneIndex] || {};
+                  
+                  // Debug logging
+                  console.log(`Batch ${batch.contractId}:`, {
+                    contractorMilestones: contractorMilestones.length,
+                    selectedMilestoneIndex,
+                    selectedMilestone: selectedMilestone.heading || 'N/A'
+                  });
+                  
+                  return (
+                    <tr key={batch._id}>
+                      <td>{batch.contractId}</td>
+                      <td>{batch.contractTitle}</td>
+                      <td>{batch.agencyName}</td>
+                      <td>{batch.adminName || "Admin"}</td>
+                      <td>₹{selectedMilestone.amount || "N/A"}</td>
+                      <td>{selectedMilestone.startDate?.split('T')[0] || "N/A"}</td>
+                      <td>{selectedMilestone.endDate?.split('T')[0] || "N/A"}</td>
+                      <td>
+                        <button
+                          type="button"
+                          className="edit-btn"
+                          onClick={() => handleContractorBatchForm(batch)}
+                          disabled={selectedMilestone.workStatus === "completed"}
+                          style={{
+                            opacity: selectedMilestone.workStatus === "completed" ? 0.7 : 1,
+                            cursor:
+                              selectedMilestone.workStatus === "completed"
+                                ? "not-allowed"
+                                : "pointer",
+                          }}
+                        >
+                          {selectedMilestone.workStatus || "Pending"}
+                        </button>
+                      </td>
+                      <td>
+                        <img
+                          src={invoice}
+                          alt="invoice"
+                          className="invoice-icon"
+                          style={{
+                            opacity: selectedMilestone.nhaiToContractorPaymentStatus === "completed" ? 1 : 0.7,
+                            cursor: selectedMilestone.nhaiToContractorPaymentStatus === "completed"
+                              ? "pointer"
+                              : "not-allowed",
+                          }}
+                          onClick={() => handleInvoiceClick(batch)}
+                        />
+                      </td>
+                      <td>
+                        <img
+                          src={infoIcon}
+                          alt="info"
+                          className="info-icon"
+                          onClick={() => handleInfoClick(batch._id)}
+                          style={{ cursor: "pointer" }}
+                        />
+                      </td>
+                      <td>
+                        {contractorMilestones.length > 1 ? (
+                          <select 
+                            value={selectedMilestoneIndex}
+                            onChange={(e) => setSelectedMilestoneIndices({
+                              ...selectedMilestoneIndices,
+                              [batch._id]: Number(e.target.value)
+                            })}
+                            style={{ padding: '4px', width: '100%' }}
+                          >
+                            {contractorMilestones.map((milestone, index) => (
+                              <option key={index} value={index}>
+                                Milestone {index + 1}
+                              </option>
+                            ))}
+                          </select>
+                        ) : (
+                          <span>Milestone 1</span>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })
               )}
             </tbody>
           </table>
@@ -246,6 +320,7 @@ const ContractorDashboard = () => {
         <ContractorBatchEditForm
           batch={contractorBatchForm}
           handleContractorBatchForm={handleContractorBatchForm}
+          onRefresh={refreshBatchInfo}
         />
       )}
 

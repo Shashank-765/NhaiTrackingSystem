@@ -13,11 +13,11 @@ import platform5 from "../../Images/platform5.png";
 import user1 from "../../Images/user1.png";
 import user2 from "../../Images/user2.png";
 import user3 from "../../Images/user3.png";
+import vector2 from "../../Images/Vector.png";
 import logo from "../../Images/logo.png";
 import platform6 from "../../Images/platform6.png";
 import { TiTick } from "react-icons/ti";
 import tickimage from "../../Images/tick.png";
-//image of seciond section url D:\new NHAI\NhaiTrackingSystem\src\Images\secondsectionimage.png
 
 const Home = () => {
   const [openFaq, setOpenFaq] = useState(null);
@@ -44,7 +44,7 @@ const Home = () => {
          <section className="hero-section">
       <div className="hero-container">
         <div className="hero-text">
-          <p className="breadcrumb">📎 ContractChain NHAI</p>
+          <p className="breadcrumb"><img src={vector2} alt="ContractChain Logo" style={{ width: '20px', height: '20px', verticalAlign: 'middle', marginRight: '5px' }} /> ContractChain NHAI</p>
           <h1>
             Transparent<br></br> Infrastructure Project<br></br> Tracking with <br></br><span className="highlight">Hyperledger Fabric</span>
           </h1>

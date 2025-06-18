@@ -5,13 +5,11 @@ const batchSchema = new mongoose.Schema(
     contractTitle: {
       type: String,
       required: [true, "Contract title is required"],
-      trim: true,
     },
     contractId: {
       type: String,
       required: [true, "Contract ID is required"],
       unique: true,
-      trim: true,
     },
     bidValue: {
       type: Number,
@@ -19,143 +17,173 @@ const batchSchema = new mongoose.Schema(
     },
     contractorValue: {
       type: Number,
-      required: [true, "Contractor value is required"],
+      required: false,
     },
     bidDuration: {
       type: String,
-      required: [true, "Bid duration is required"],
-      trim: true,
+      required: false,
     },
     agencyName: {
       type: String,
       required: [true, "Agency name is required"],
-      trim: true,
     },
     agencyId: {
-      type: String,
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
       required: [true, "Agency ID is required"],
-      trim: true,
-    },
-    contractorName: {
-      type: String,
-      required: [true, "Contractor name is required"],
-      trim: true,
     },
     contractorId: {
-      type: String,
-      required: [true, "Contractor ID is required"],
-      trim: true,
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: false,
     },
     status: {
       type: String,
-      required: [true, "Status is required"],
       enum: ["pending", "approved", "rejected"],
       default: "pending",
-    },
-    workStatus: {
-      type: String,
-      enum: ["pending", "30_percent", "80_percent", "completed"],
-      default: "pending",
-    },
-    workApproved: {
-      type: Boolean,
-      default: false,
     },
     workDetails: {
       type: String,
       default: "",
     },
+    completedAt: {
+      type: Date,
+    },
     invoiceDownloaded: {
       type: Boolean,
       default: false,
     },
-    adminInvoiceDownloaded: {
-      type: Boolean,
-      default: false,
-    },
-    contractorInvoiceDownloaded: {
-      type: Boolean,
-      default: false,
-    },
-    transactionId: {
-      type: String,
-      trim: true,
-    },
-    transactionDate: {
-      type: Date,
-    },
-    transactionTime: {
-      type: Date,
-      default: null,
-    },
-    paymentStatus: {
-      type: String,
-      enum: ["pending", "completed"],
-      default: "pending",
-    },
-    paymentMedia: {
-      type: String,
-    },
-    // fields for agency to nhai payment
     agencyToNhaiTransactionId: {
       type: String,
-      trim: true,
+      default: "",
     },
     agencyToNhaiTransactionDate: {
       type: Date,
     },
-    agencyToNhaiTransactionTime: {
-      type: Date,
-      default: null,
+    agencyToNhaiPaymentMedia: {
+      type: String,
+      default: "",
     },
     agencyToNhaiPaymentStatus: {
       type: String,
       enum: ["pending", "completed"],
       default: "pending",
     },
-    agencyToNhaiPaymentMedia: {
-      type: String,
-    },
-    // fields for nhai to contractor payment
     nhaiToContractorTransactionId: {
       type: String,
-      trim: true,
+      default: "",
     },
     nhaiToContractorTransactionDate: {
       type: Date,
     },
-    nhaiToContractorTransactionTime: {
-      type: Date,
-      default: null,
+    nhaiToContractorPaymentMedia: {
+      type: String,
+      default: "",
     },
     nhaiToContractorPaymentStatus: {
       type: String,
       enum: ["pending", "completed"],
       default: "pending",
     },
-    nhaiToContractorPaymentMedia: {
-      type: String,
-    },
-    // Add milestone fields
-    milestones: [{
-      heading: {
-        type: String,
-        required: true
+    milestones: [
+      {
+        heading: {
+          type: String,
+          required: [true, "Milestone heading is required"],
+        },
+        contractorId: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "User",
+          required: [true, "Contractor ID is required for milestone"],
+        },
+        contractorName: {
+          type: String,
+          required: [true, "Contractor name is required for milestone"],
+        },
+        amount: {
+          type: Number,
+          required: [true, "Milestone amount is required"],
+        },
+        startDate: {
+          type: Date,
+          required: [true, "Start date is required"],
+          validate: {
+            validator: function(v) {
+              return v instanceof Date && !isNaN(v);
+            },
+            message: "Start date must be a valid date"
+          }
+        },
+        endDate: {
+          type: Date,
+          required: [true, "End date is required"],
+          validate: {
+            validator: function(v) {
+              return v instanceof Date && !isNaN(v);
+            },
+            message: "End date must be a valid date"
+          }
+        },
+        status: {
+          type: String,
+          enum: ["pending", "completed"],
+          default: "pending",
+        },
+        workStatus: {
+          type: String,
+          enum: ["pending", "30_percent", "80_percent", "completed"],
+          default: "pending"
+        },
+        workDetails: {
+          type: String,
+          default: ""
+        },
+        workApproved: {
+          type: Boolean,
+          default: false,
+          required: true
+        },
+        completedAt: {
+          type: Date
+        },
+        nhaiToContractorPaymentStatus: {
+          type: String,
+          enum: ["pending", "completed"],
+          default: "pending"
+        },
+        nhaiToContractorTransactionId: {
+          type: String,
+          default: ""
+        },
+        nhaiToContractorTransactionDate: {
+          type: Date
+        },
+        nhaiToContractorPaymentMedia: {
+          type: String,
+          default: ""
+        }
       },
-      amount: {
-        type: Number,
-        required: true
-      },
-      status: {
-        type: String,
-        enum: ["pending", "completed"],
-        default: "pending"
-      }
-    }]
+    ],
   },
   {
     timestamps: true,
   }
 );
+
+// Add a pre-save middleware to validate milestone dates
+batchSchema.pre('save', function(next) {
+  if (this.milestones && this.milestones.length > 0) {
+    for (let i = 0; i < this.milestones.length; i++) {
+      const milestone = this.milestones[i];
+      if (milestone.startDate && milestone.endDate) {
+        if (milestone.endDate < milestone.startDate) {  
+          next(new Error(`Milestone ${i + 1}: End date must be after start date`));
+          return;
+        }
+      }
+    }
+  }
+  next();
+});
 
 module.exports = mongoose.model("Batch", batchSchema);

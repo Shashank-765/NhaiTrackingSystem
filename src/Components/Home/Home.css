@@ -873,20 +873,25 @@ html {
   background-color: #1e293b;
 }
 
-/* Media Queries for Responsive Design */
-@media (max-width: 1250px) {
+
+@media (max-width: 1250px) and (min-width: 1200px) {
+  .hero-container{
+    width:100%;
+    margin:auto;
+  }
   .info-box p {
-    font-size: 13px;
+    font-size: 11px;
   }
 
   .hero-text h1 {
     width: 53vw;
-    font-size: 50px;
+    font-size: 40px;
   }
-
+  .logocontainercompany{
+    margin-left:10px;
+  }
   .description {
-    width: 90vw;
-    font-size: 18px;
+    font-size: 15px;
   }
 
   .timeline-item1:nth-child(odd) .timeline-content {
@@ -923,8 +928,51 @@ html {
     padding: 30px !important;
   }
 }
+@media (max-width: 1200px) and (min-width: 992px) {
 
-@media (max-width: 1024px) {
+  .info-box p {
+    font-size: 11px;
+  }
+
+  .hero-text h1 {
+    width: 53vw;
+    font-size: 40px;
+  }
+  .timeline-item1:nth-child(odd) .timeline-content {
+    width: 45%;
+    text-align: right;
+    position: absolute;
+    right: 505px;
+  }
+
+  .timeline-item1:nth-child(even) .timeline-content {
+    width: 45%;
+    text-align: right;
+    position: absolute;
+    left: 505px;
+  }
+
+  .why-contractchain-section .section-heading {
+    font-size: 20px;
+  }
+
+  .why-contractchain-section .section-description {
+    font-size: 14px;
+  }
+
+  .milestone-box {
+    padding: 15px 25px 15px 25px;
+  }
+
+  .milestone-subtext, .milestone-text {
+    font-size: 14px;
+  }
+
+  .section-content {
+    padding: 30px !important;
+  }
+}
+@media (max-width: 1024px) and (min-width: 992px) {
   .info-box p {
     font-size: 12px;
   }
@@ -974,7 +1022,7 @@ html {
   }
 }
 
-@media (max-width: 992px) {
+@media (max-width: 992px) and (min-width: 768px) {
   .info-box p {
     font-size: 12px;
   }
@@ -993,14 +1041,14 @@ html {
     width: 46%;
     text-align: right;
     position: absolute;
-    right: 430px;
+    right: 400px;
   }
 
   .timeline-item1:nth-child(even) .timeline-content {
     width: 46%;
     text-align: right;
     position: absolute;
-    left: 430px;
+    left: 400px;
   }
 
   .why-contractchain-section .section-heading {
@@ -1024,32 +1072,37 @@ html {
   }
 }
 
-@media (max-width: 768px) {
+@media (max-width: 768px) and (min-width:575px) {
   .info-box p {
-    font-size: 12px;
+    font-size: 9px;
   }
-
+.platform-features-section, .use-case-section {
+padding:0px;
+}
+.section-heading {
+    font-size: 25px;
+    }
   .hero-text h1 {
     width: 53vw;
-    font-size: 40px;
+    font-size: 25px;
   }
 
   .description {
     width: 90vw;
-    font-size: 15px;
+    font-size: 10px;
   }
 
   .timeline-item1:nth-child(odd) .timeline-content {
     width: 44%;
     text-align: right;
     position: absolute;
-    right: 330px;
+    right: 300px;
   }
   .timeline-item1:nth-child(even) .timeline-content {
     width: 44%;
     text-align: right;
     position: absolute;
-    left: 330px;
+    left: 300px;
   }
 
   .why-contractchain-section .section-heading {
@@ -1071,7 +1124,7 @@ html {
   }
 }
 
-@media (max-width: 576px) {
+@media (max-width: 576px) and (min-width:375px) {
   .info-box p {
       font-size: 8px;
   }

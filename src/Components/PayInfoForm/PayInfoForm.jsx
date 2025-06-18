@@ -4,7 +4,7 @@ import "react-toastify/dist/ReactToastify.css";
 import "./PayInfoForm.css";
 import { useAuth } from "../../context/AuthContext";
 
-const PayInfoForm = ({ batchId, onClose, onSuccess }) => {
+const PayInfoForm = ({ batchId, selectedMilestoneIndex, onClose, onSuccess }) => {
   const [batch, setBatch] = useState(null);
   const [formData, setFormData] = useState({
     transactionId: "",
@@ -17,6 +17,8 @@ const PayInfoForm = ({ batchId, onClose, onSuccess }) => {
     // transactionId of nhai to contractor
     nhaiToContractorTransactionId: "",
     nhaiToContractorTransactionDate: new Date().toISOString().split("T")[0],
+
+    selectedMilestoneIndex: undefined,
   });
   const [mediaFile, setMediaFile] = useState(null);
   const overlayRef = useRef();
@@ -74,60 +76,90 @@ const PayInfoForm = ({ batchId, onClose, onSuccess }) => {
     e.preventDefault();
     try {
       const form = new FormData();
-      // Common fields
       form.append("batchId", batchId);
-      // form.append("transactionId", formData.transactionId);
-      // form.append("transactionDate", formData.transactionDate);
-      // if (mediaFile) form.append("media", mediaFile);
 
       // Handle Agency to NHAI payment
       if (user.role.toLowerCase() === 'agency') {
         if (!formData.transactionId || !formData.transactionDate) {
-          toast.error('Please fill in all required fields',{
+          toast.error('Please fill in all required fields', {
             autoClose: 1000,
           });
           return;
         }
-      
-      // form.append('transactionId', formData.agencyToNhaiTransactionId);
-      form.append('transactionId', formData.transactionId);
-      // form.append('transactionDate', formData.agencyToNhaiTransactionDate);
-      form.append('transactionDate', formData.transactionDate);
-      form.append('transactionType', 'agency_to_nhai');
-      
-      if (mediaFile) {
-        form.append('media', mediaFile);
-      } else if (!batch.paymentMedia) {
-        toast.error('Please upload payment proof',{
-          autoClose: 1000,
-        });
-        return;
-      }
+        
+        form.append('transactionId', formData.transactionId);
+        form.append('transactionDate', formData.transactionDate);
+        form.append('transactionType', 'agency_to_nhai');
+        
+        if (mediaFile) {
+          form.append('media', mediaFile);
+        } else if (!batch.paymentMedia) {
+          toast.error('Please upload payment proof', {
+            autoClose: 1000,
+          });
+          return;
+        }
       }
 
+      // Handle NHAI to Contractor payment
+      if (user.role.toLowerCase() === 'admin') {
+        if (!formData.transactionId || !formData.transactionDate) {
+          toast.error('Please fill in all required fields', {
+            autoClose: 1000,
+          });
+          return;
+        }
 
-       // Handle NHAI to Contractor payment
-    if (user.role.toLowerCase() === 'admin') {
-      if (!formData.transactionId || !formData.transactionDate) {
-        toast.error('Please fill in all required fields',{autoClose: 1000});
-        return;
+        // Check if the selected milestone is completed and approved
+        const selectedMilestone = batch.milestones[selectedMilestoneIndex];
+        if (!selectedMilestone) {
+          toast.error('Invalid milestone selected', {
+            autoClose: 2000,
+          });
+          return;
+        }
+
+        if (selectedMilestone.workStatus !== "completed") {
+          toast.error('Cannot make payment for incomplete work', {
+            autoClose: 2000,
+          });
+          return;
+        }
+
+        // Default workApproved to false if not present
+        if (!selectedMilestone.hasOwnProperty('workApproved')) {
+          selectedMilestone.workApproved = false;
+        }
+
+        if (!selectedMilestone.workApproved) {
+          toast.error('Cannot make payment for unapproved work', {
+            autoClose: 2000,
+          });
+          return;
+        }
+
+        // Check if payment is already made
+        if (selectedMilestone.nhaiToContractorPaymentStatus === "completed") {
+          toast.error('Payment already made for this milestone', {
+            autoClose: 2000,
+          });
+          return;
+        }
+        
+        form.append('transactionId', formData.transactionId);
+        form.append('transactionDate', formData.transactionDate);
+        form.append('transactionType', 'nhai_to_contractor');
+        form.append('milestoneIndex', selectedMilestoneIndex);
+        
+        if (mediaFile) {
+          form.append('media', mediaFile);
+        } else if (!batch.paymentMedia) {
+          toast.error('Please upload payment proof', {
+            autoClose: 1000,
+          });
+          return;
+        }
       }
-      
-      // form.append('transactionId', formData.nhaiToContractorTransactionId);
-      form.append('transactionId', formData.transactionId);
-      // form.append('transactionDate', formData.nhaiToContractorTransactionDate);
-      form.append('transactionDate', formData.transactionDate);
-      form.append('transactionType', 'nhai_to_contractor');
-      
-      if (mediaFile) {
-        form.append('media', mediaFile);
-      } else if (!batch.paymentMedia) {
-        toast.error('Please upload payment proof',{
-          autoClose: 1000,
-        });
-        return;
-      }
-    }
 
       const response = await fetch(
         `${import.meta.env.VITE_API_URL}/${
@@ -143,19 +175,19 @@ const PayInfoForm = ({ batchId, onClose, onSuccess }) => {
       );
       const data = await response.json();
       if (data.success) {
-        toast.success("Payment information updated successfully",{
+        toast.success("Payment information updated successfully", {
           autoClose: 1000,
         });
         if (onSuccess) onSuccess();
         onClose();
       } else {
-        toast.error(data.message || "Error updating payment information",{
+        toast.error(data.message || "Error updating payment information", {
           autoClose: 1000,
         });
       }
     } catch (error) {
       console.error("Error:", error);
-      toast.error("Error updating payment information",{
+      toast.error("Error updating payment information", {
         autoClose: 1000,
       });
     }
@@ -190,18 +222,37 @@ const PayInfoForm = ({ batchId, onClose, onSuccess }) => {
             <input type="text" value={batch.agencyName} disabled />
           </div>
 
-          <div className="form-group">
-            <label>Contractor Name</label>
-            <input type="text" value={batch.contractorName} disabled />
-          </div>
+          {user.role.toLowerCase() === "admin" && (
+            <>
+              <div className="form-group">
+                <label>Contractor Name</label>
+                <input 
+                  type="text" 
+                  value={batch.milestones[selectedMilestoneIndex]?.contractorName || "N/A"} 
+                  disabled 
+                />
+              </div>
+
+              <div className="form-group">
+                <label>Milestone</label>
+                <input 
+                  type="text" 
+                  value={batch.milestones[selectedMilestoneIndex]?.heading || "N/A"} 
+                  disabled 
+                />
+              </div>
+            </>
+          )}
 
           <div className="form-group">
             <label>Amount</label>
             <input
               type="text"
-              value={`₹${user.role.toLowerCase() === 'agency' 
-                ? batch.bidValue.toLocaleString() 
-                : batch.contractorValue.toLocaleString()}`}
+              value={`₹${
+                user.role.toLowerCase() === 'agency'
+                  ? batch.bidValue.toLocaleString()
+                  : (batch.milestones[selectedMilestoneIndex]?.amount?.toLocaleString() || "0")
+              }`}
               disabled
             />
           </div>
