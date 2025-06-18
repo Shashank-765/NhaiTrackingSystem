@@ -157,3 +157,10 @@
         width: auto;
     }
 }
+
+.logout-icon {
+  transition: filter 0.2s;
+}
+.logout-icon:hover {
+  filter: brightness(0.8);
+}

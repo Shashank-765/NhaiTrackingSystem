@@ -11,7 +11,6 @@ const Tracker = () => {
   const [userRole, setUserRole] = useState(null);
 
   useEffect(() => {
-    // Get user role from localStorage
     const user = JSON.parse(localStorage.getItem('user'));
     setUserRole(user?.role);
   }, []);
@@ -264,8 +263,6 @@ const Tracker = () => {
 
     const steps = getSteps();
     const currentStep = getCurrentStep();
-
-    // Step 0 (Admin created batch) is always completed if we have a batch
     if (stepIndex === 0) {
       return { isCompleted: true, isActive: false };
     }
@@ -343,20 +340,6 @@ const Tracker = () => {
 
   const steps = getSteps();
   const currentStep = getCurrentStep();
-
-  // Debug logging
-  console.log('Tracker Debug:', {
-    userRole,
-    currentStep,
-    agencyPaymentStatus: batch.agencyToNhaiPaymentStatus,
-    milestones: batch.milestones?.map(m => ({
-      heading: m.heading,
-      workStatus: m.workStatus,
-      workApproved: m.workApproved,
-      paymentStatus: m.nhaiToContractorPaymentStatus
-    }))
-  });
-
   return (
     <div className="tracker-page">
       <div className="tracker-container">

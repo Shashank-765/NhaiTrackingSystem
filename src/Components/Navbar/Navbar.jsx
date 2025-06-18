@@ -6,6 +6,7 @@ import { useNotifications } from "../../context/NotificationContext";
 import bell from "../../Images/bell.png";
 import Pusher from "pusher-js";
 import logo from "../../Images/logo.png";
+import logoutIcon from "../../Images/logout.png";
 
 const Navbar = () => {
   const navigate = useNavigate();
@@ -105,13 +106,26 @@ const Navbar = () => {
             Get Started
           </Link>
         )}
-        {isAuthenticated && (
-          <div className="notification-bell-container">
-            <Link to="/notifications" onClick={clearNewNotificationStatus}>
-              <img src={bell} alt="" className="bell-icon" />
-              {hasNewNotification && <span className="notification-dot"></span>}
-            </Link>
-          </div>
+        {isAuthenticated && user?.role !== "admin" && (
+          <>
+            <div className="notification-bell-container">
+              <Link to="/notifications" onClick={clearNewNotificationStatus}>
+                <img src={bell} alt="" className="bell-icon" />
+                {hasNewNotification && <span className="notification-dot"></span>}
+              </Link>
+            </div>
+            <img
+              src={logoutIcon}
+              alt="Logout"
+              className="logout-icon"
+              style={{ width: "32px", height: "32px", cursor: "pointer", marginLeft: "16px" }}
+              onClick={() => {
+                logout();
+                navigate("/");
+              }}
+              title="Logout"
+            />
+          </>
         )}
       </div>
     </nav>

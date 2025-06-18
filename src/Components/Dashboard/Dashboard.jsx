@@ -141,9 +141,10 @@ const [userTotalPages, setUserTotalPages] = useState(1);
         setUserTotalPages(data.pagination.totalPages);
         setUsers(data.data);
       } else {
-        toast.error("Error fetching users");
+        toast.error(data.message || "Error fetching users");
       }
     } catch (error) {
+      console.error('Fetch users error:', error);
       toast.error("Server error. Please try again later.");
     } finally {
       setIsLoading(false);
@@ -170,7 +171,7 @@ const [userTotalPages, setUserTotalPages] = useState(1);
         setBatches(data.data);
         setTotalPages(data.pagination.totalPages);
       } else {
-        toast.error("Error fetching batches");
+        toast.error(data.message || "Error fetching batches");
       }
     } catch (error) {
       toast.error("Server error. Please try again later.");
@@ -375,7 +376,13 @@ const [userTotalPages, setUserTotalPages] = useState(1);
 
   // Function to handle invoice click ----- commented out for now
   const handleInvoiceClick = (batch) => {
-    if (batch.workApproved && batch.workStatus === "completed" && batch.agencyToNhaiPaymentStatus.toLowerCase() === 'completed') {
+    // Get the selected milestone index for this batch
+    const selectedMilestoneIndex = selectedMilestoneIndices[batch._id] || 0;
+    const selectedMilestone = batch.milestones?.[selectedMilestoneIndex];
+    
+    if (selectedMilestone?.workApproved && 
+        selectedMilestone?.workStatus === "completed" && 
+        batch.agencyToNhaiPaymentStatus.toLowerCase() === 'completed') {
       setSelectedInvoice(batch);
     } else {
       toast.warning(

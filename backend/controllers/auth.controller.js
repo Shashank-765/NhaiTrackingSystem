@@ -26,7 +26,12 @@ exports.login = async (req, res) => {
                 success: true,
                 message: 'Login successful',
                 token,
-                user: { email, role: 'admin' }
+                user: { 
+                    id: 'admin',
+                    email, 
+                    role: 'admin',
+                    name: 'Admin'
+                }
             });
         }
 
@@ -48,7 +53,7 @@ exports.login = async (req, res) => {
             });
         }
 
-        // Create JWT token
+        // Create JWT token with consistent structure
         const token = jwt.sign(
             { 
                 id: user._id,
@@ -64,10 +69,12 @@ exports.login = async (req, res) => {
             message: 'Login successful',
             token,
             user: {
+                id: user._id,
                 email: user.email,
                 role: user.role,
                 name: user.name,
-                id: user._id
+                id: user._id,
+                token
             }
         });
     } catch (error) {

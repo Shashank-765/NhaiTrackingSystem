@@ -10,34 +10,45 @@ const Invoice = ({ batch }) => {
   const { user } = useAuth();
   const isAdmin = user?.role?.toLowerCase() === 'admin';
   const isContractor = user?.role?.toLowerCase() === 'contractor';
+  
   const downloadInvoice = async () => {
-    if (batch.workStatus !== 'completed' || !batch.workApproved) {
+    // Check if any milestone has completed and approved work
+    const hasCompletedApprovedWork = batch.milestones?.some(milestone => 
+      milestone.workStatus === 'completed' && milestone.workApproved
+    );
+
+    if (!hasCompletedApprovedWork) {
       toast.warning('Invoice can only be downloaded for completed and approved work',{
         autoClose: 1000,
       });
       return;
-    }else if(isContractor && !batch.adminInvoiceDownloaded){
+    } else if(isContractor && !batch.adminInvoiceDownloaded){
       toast.warning('Please wait for admin to download the invoice first',{autoClose: 1000});
       return;
     } else if(isAdmin){
       batch.adminInvoiceDownloaded=true;
     }
-    // If admin, check if contractor has downloaded first
-    // if (isAdmin && !batch.invoiceDownloaded) {
-    //   toast.warning('Please wait for contractor to download the invoice first',{
-    //     autoClose: 1000,
-    //   });
-    //   return;
-    // }
 
     try {
+      // Force body and html background to white for html2canvas
+      const originalBodyBg = document.body.style.backgroundColor;
+      const originalHtmlBg = document.documentElement.style.backgroundColor;
+      document.body.style.backgroundColor = '#fff';
+      document.documentElement.style.backgroundColor = '#fff';
+
       const element = invoiceRef.current;
       const canvas = await html2canvas(element, {
         scale: 1,
         useCORS: true,
         logging: false,
-        removeContainer: true
+        removeContainer: true,
+        backgroundColor: '#fff',
       });
+
+      // Restore original background colors
+      document.body.style.backgroundColor = originalBodyBg;
+      document.documentElement.style.backgroundColor = originalHtmlBg;
+
       const data = canvas.toDataURL('image/png');
 
       const pdf = new jsPDF('p', 'mm', 'a4');
@@ -125,16 +136,14 @@ const Invoice = ({ batch }) => {
           <strong style={styles.bold}><FaRegFileAlt style={styles.inlineIcon} /> Status</strong> {batch.status}
         </div>
         <div style={styles.detailItemColumn2}>
-          {batch.workApproved && (
+          {batch.milestones?.some(milestone => milestone.workApproved) && (
             <span style={styles.approvedTag}>✓ approved</span>
           )}
-          <strong style={styles.bold}>Work Status</strong> {batch.workStatus}
+          <strong style={styles.bold}>Work Status</strong> 
+          {batch.milestones?.some(milestone => milestone.workStatus === 'completed') ? 'Completed' : 'In Progress'}
         </div>
 
         {/* Row 4 */}
-        <div style={styles.detailItem}>
-          <strong style={styles.bold}>Bid Duration</strong> {batch.bidDuration}
-        </div>
         <div style={styles.detailItem}>
           <strong style={styles.bold}>Date</strong> {new Date().toLocaleDateString()}
         </div>
@@ -178,7 +187,7 @@ const styles = {
     border: '1px solid #e0e0e0',
     borderRadius: '12px',
     boxShadow: '0 6px 12px rgba(0, 0, 0, 0.1)',
-    backgroundColor: '#ffffff',
+    backgroundColor: '#fff',
     fontFamily: 'Arial, sans-serif',
   },
   headerContainer: {

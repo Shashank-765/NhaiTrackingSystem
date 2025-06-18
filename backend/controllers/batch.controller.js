@@ -427,11 +427,12 @@ const approveWork = async (req, res) => {
   }
 };
 
-// download invoice
+// download invoice - handles all invoice operations
 const downloadInvoice = async (req, res) => {
   try {
     const batch = await Batch.findById(req.params.id);
-    const { role } = req.user;
+    const { role } = req.user || {}; // Make it optional
+    
     if (!batch) {
       return res.status(404).json({
         success: false,
@@ -439,25 +440,51 @@ const downloadInvoice = async (req, res) => {
       });
     }
 
-    if (!batch.invoiceDownloaded) {
-      return res.status(403).json({
-        success: false,
-        message:
-          "Contractor must download the invoice before admin can access it.",
-      });
+    // Check if user is admin (default to admin if no user info)
+    const isAdmin = role === 'admin' || !req.user;
+
+    // For admin: check if contractor has downloaded first
+    // if (isAdmin && !batch.invoiceDownloaded) {
+    //   return res.status(403).json({
+    //     success: false,
+    //     message: "Contractor must download the invoice before admin can access it.",
+    //   });
+    // }
+
+    // Update tracking flags based on user role
+    if (isAdmin) {
+      batch.adminInvoiceDownloaded = true;
+    } else {
+      batch.invoiceDownloaded = true;
     }
 
-    // Logic to generate and send invoice PDF/file
-    // For example:
-    // const invoicePDF = await generatePDF(batch);
-    // res.setHeader('Content-Type', 'application/pdf');
-    // res.send(invoicePDF);
+    await batch.save();
 
+    // Send notification
+    const timestamp = new Date();
+    await pusher.trigger('admin-channel', 'invoice-downloaded', {
+      id: `inv-${Date.now()}`,
+      message: `${batch.contractorName} has downloaded invoice for ${batch.contractTitle}`,
+      batchId: batch._id,
+      contractorName: batch.contractorName,
+      contractTitle: batch.contractTitle,
+      timestamp: timestamp.toISOString(),
+      downloadedBy: isAdmin ? 'admin' : 'contractor'
+    });
+
+    // Return success response
     return res.status(200).json({
       success: true,
-      message: "Invoice downloaded successfully (admin).",
-      // data: invoicePDF
+      message: `Invoice downloaded successfully (${isAdmin ? 'admin' : 'contractor'}).`,
+      data: {
+        contractTitle: batch.contractTitle,
+        contractorName: batch.contractorName,
+        bidValue: batch.bidValue,
+        downloadedBy: isAdmin ? 'admin' : 'contractor',
+        timestamp: timestamp.toISOString()
+      }
     });
+
   } catch (error) {
     console.error("Error downloading invoice:", error);
     return res.status(500).json({

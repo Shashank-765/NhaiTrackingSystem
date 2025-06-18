@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { createBatch, getAllBatches, getBatchById, updateBatchStatus, updateWorkDetails, approveWork, updatePaymentInfo, updateMilestoneStatus } = require('../controllers/batch.controller');
+const { createBatch, getAllBatches, getBatchById, updateBatchStatus, updateWorkDetails, approveWork, updatePaymentInfo, updateMilestoneStatus, downloadInvoice } = require('../controllers/batch.controller');
 const { protect, isAdmin } = require('../middleware/auth.middleware');
 const Batch = require('../models/batch.model');
 const Pusher = require('pusher');
@@ -46,13 +46,7 @@ const upload = multer({
 router.get('/', protect, getAllBatches);
 
 // Get a single batch by ID
-router.get('/:id', protect, (req, res, next) => {
-    console.log('GET /:id route hit');
-    console.log('Params:', req.params);
-    console.log('Query:', req.query);
-    console.log('Headers:', req.headers);
-    next();
-}, getBatchById);
+router.get('/:id', getBatchById);
 
 // Create a new batch (protected route)
 router.post('/create', protect, createBatch);
@@ -70,89 +64,10 @@ router.patch('/:id/approve-work', protect, isAdmin, approveWork);
 // router.patch('/:id/payment', protect, isAdmin, upload.single('media'), updatePaymentInfo);
 router.patch('/:id/payment', protect, upload.single('media'), updatePaymentInfo);
 
-// Track invoice downloads
-router.patch('/:id/track-invoice-download', protect, async (req, res) => {
-    try {
-        const batch = await Batch.findByIdAndUpdate(
-            req.params.id,
-            // { invoiceDownloaded: true },
-            {adminInvoiceDownloaded: true}, // Update both flags
-            { new: true }
-        );
+// Invoice download - handles tracking, notification, and permission
+router.get('/:id/invoice/download', protect, downloadInvoice);
 
-        if (!batch) {
-            return res.status(404).json({ success: false, message: 'Batch not found' });
-        }
-
-        res.status(200).json({ success: true, data: batch });
-    } catch (error) {
-        res.status(500).json({ success: false, message: error.message });
-    }
-});
-
-// Notify invoice download
-router.post('/:id/notify-invoice-download', protect, async (req, res) => {
-    try {
-        const batch = await Batch.findById(req.params.id);
-        if (!batch) {
-            return res.status(404).json({ success: false, message: 'Batch not found' });
-        }
-
-        const timestamp = new Date();
-        
-        // Trigger Pusher notification with more detailed information
-        await pusher.trigger('admin-channel', 'invoice-downloaded', {
-            id: `inv-${Date.now()}`, // Unique ID for the notification
-            message: `${batch.contractorName} has downloaded invoice for ${batch.contractTitle}`,
-            batchId: batch._id,
-            contractorName: batch.contractorName,
-            contractTitle: batch.contractTitle,
-            timestamp: timestamp.toISOString()
-        });
-
-        res.status(200).json({ success: true });
-    } catch (error) {
-        console.error('Notification Error:', error);
-        res.status(500).json({ success: false, message: error.message });
-    }
-});
-
-// admin download invoice route (not before contractor)
-router.get('/:id/admin-invoice-download', protect, isAdmin, async (req, res) => {
-    try {
-      const batch = await Batch.findById(req.params.id);
-  
-      if (!batch) {
-        return res.status(404).json({ success: false, message: 'Batch not found' });
-      }
-  
-      if (!batch.invoiceDownloaded) {
-        return res.status(403).json({
-          success: false,
-          message: 'Contractor must download the invoice before admin can access it.'
-        });
-      }
-  
-      // If invoice download is allowed, return success or actual file
-      // Replace with your actual logic if generating or sending a PDF
-      res.status(200).json({
-        success: true,
-        message: 'Admin invoice download permitted.',
-        data: {
-          contractTitle: batch.contractTitle,
-          contractorName: batch.contractorName,
-          bidValue: batch.bidValue,
-          // ... add more fields as needed
-        }
-      });
-  
-    } catch (error) {
-      console.error('Admin invoice download error:', error);
-      res.status(500).json({ success: false, message: 'Server error' });
-    }
-  });
-  
 // Update milestone status (protected route)
-router.patch('/:id/milestone-status', protect, updateMilestoneStatus);
+router.patch('/:id/milestone-status', updateMilestoneStatus);
 
 module.exports = router;

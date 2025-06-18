@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import "./Signup.css";
 import CircularLoader from "../CircularLoader/CircularLoader";
@@ -8,7 +8,7 @@ import { useAuth } from "../../context/AuthContext";
 
 const Signup = () => {
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { login, setIsAuthenticated, setUser, logout } = useAuth();
   const [isCircularloader, setIsCircularloader] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
@@ -41,6 +41,17 @@ const Signup = () => {
       if (data.success) {
         // Use auth context to handle login
         login(data.user, data.token);
+
+        // Role-based redirect
+        if (data.user.role === "contractor") {
+          navigate("/contractor/dashboard");
+        } else if (data.user.role === "agency") {
+          navigate("/agency/dashboard");
+        } else if (data.user.role === "admin") {
+          navigate("/dashboard"); // or your admin dashboard route
+        } else {
+          navigate("/"); // fallback
+        }
 
         toast.success("Login successful!", {
           position: "top-right",
@@ -79,6 +90,27 @@ const Signup = () => {
       setIsCircularloader(false);
     }
   };
+
+  useEffect(() => {
+    const checkAuth = () => {
+        const token = localStorage.getItem('token');
+        const userData = localStorage.getItem('user');
+        const tokenExpiry = localStorage.getItem('tokenExpiry');
+
+        if (token && userData && tokenExpiry) {
+            const now = new Date().getTime();
+
+            if (now < parseInt(tokenExpiry)) {
+                setIsAuthenticated(true);
+                setUser(JSON.parse(userData));
+            } else {
+                logout();
+            }
+        }
+    };
+
+    checkAuth();
+  }, [setIsAuthenticated, setUser, logout]);
 
   return (
     <div className="signuploginconainter">
