@@ -7,7 +7,9 @@ html {
     display: flex;
     flex-direction: column;
   }
-  
+  .hero-image{
+    width:650px;
+  }
   .main-content {
     padding: 0;
     display: flex;
