@@ -17,18 +17,6 @@ const Invoice = ({ batch }) => {
       milestone.workStatus === 'completed' && milestone.workApproved
     );
 
-    if (!hasCompletedApprovedWork) {
-      toast.warning('Invoice can only be downloaded for completed and approved work',{
-        autoClose: 1000,
-      });
-      return;
-    } else if(isContractor && !batch.adminInvoiceDownloaded){
-      toast.warning('Please wait for admin to download the invoice first',{autoClose: 1000});
-      return;
-    } else if(isAdmin){
-      batch.adminInvoiceDownloaded=true;
-    }
-
     try {
       // Force body and html background to white for html2canvas
       const originalBodyBg = document.body.style.backgroundColor;
@@ -36,7 +24,14 @@ const Invoice = ({ batch }) => {
       document.body.style.backgroundColor = '#fff';
       document.documentElement.style.backgroundColor = '#fff';
 
+      // Remove boxShadow and border from invoice container
       const element = invoiceRef.current;
+      const originalBoxShadow = element.style.boxShadow;
+      const originalBorder = element.style.border;
+      element.style.boxShadow = 'none';
+      element.style.border = 'none';
+      element.style.backgroundColor = '#fff';
+
       const canvas = await html2canvas(element, {
         scale: 1,
         useCORS: true,
@@ -45,9 +40,11 @@ const Invoice = ({ batch }) => {
         backgroundColor: '#fff',
       });
 
-      // Restore original background colors
+      // Restore original background colors and styles
       document.body.style.backgroundColor = originalBodyBg;
       document.documentElement.style.backgroundColor = originalHtmlBg;
+      element.style.boxShadow = originalBoxShadow;
+      element.style.border = originalBorder;
 
       const data = canvas.toDataURL('image/png');
 
@@ -94,10 +91,21 @@ const Invoice = ({ batch }) => {
     }
   };
 
+  // Filter milestones for contractor
+  let milestonesToShow = batch.milestones;
+  if (isContractor) {
+    let contractorName = user?.name;
+    if (!contractorName && localStorage.getItem('user')) {
+      try {
+        contractorName = JSON.parse(localStorage.getItem('user')).name;
+      } catch {}
+    }
+    milestonesToShow = batch.milestones?.filter(ms => ms.contractorName === contractorName);
+  }
+
   return (
     <>
-    
-    <div ref={invoiceRef} style={styles.container}>
+    <div ref={invoiceRef} style={{...styles.container, backgroundColor: '#fff', boxShadow: 'none', border: 'none'}} className="invoice-pdf-bg">
       <div style={styles.headerContainer}>
         <h1 style={styles.heading}>INVOICE</h1>
         <div style={styles.blockchainDetails}>
@@ -112,49 +120,21 @@ const Invoice = ({ batch }) => {
           <p style={styles.blockchainSubText}>Verified On Hyperledger Fabric</p>
         </div>
       </div>
-      <p style={styles.contractTitleTop}><FaRegFileAlt style={styles.inlineIcon} /> Contract Title<br/>mumbai project</p>
-
+      <p style={styles.contractTitleTop}><FaRegFileAlt style={styles.inlineIcon} /> Contract Title<br/>{batch.contractTitle}</p>
       <div style={styles.invoiceDetails}>
         {/* Row 1 */}
         <div style={styles.detailItem}>
           <strong style={styles.bold}><FaRegFileAlt style={styles.inlineIcon} /> Contract Title</strong> {batch.contractTitle}
         </div>
         <div style={styles.detailItem}>
-          <strong style={styles.bold}>Bid Duration</strong> {batch.bidDuration}
-        </div>
-
-        {/* Row 2 */}
-        <div style={styles.detailItem}>
-          <strong style={styles.bold}><FaUser style={styles.inlineIcon} /> Agency Name</strong> {batch.agencyName}
+          <strong style={styles.bold}>Agency Name</strong> {batch.agencyName}
         </div>
         <div style={styles.detailItem}>
-          <strong style={styles.bold}>Contractor Name</strong> {batch.contractorName}
+          <strong style={styles.bold}>Status</strong> {batch.status}
         </div>
-
-        {/* Row 3 */}
-        <div style={styles.detailItem}>
-          <strong style={styles.bold}><FaRegFileAlt style={styles.inlineIcon} /> Status</strong> {batch.status}
-        </div>
-        <div style={styles.detailItemColumn2}>
-          {batch.milestones?.some(milestone => milestone.workApproved) && (
-            <span style={styles.approvedTag}>✓ approved</span>
-          )}
-          <strong style={styles.bold}>Work Status</strong> 
-          {batch.milestones?.some(milestone => milestone.workStatus === 'completed') ? 'Completed' : 'In Progress'}
-        </div>
-
-        {/* Row 4 */}
         <div style={styles.detailItem}>
           <strong style={styles.bold}>Date</strong> {new Date().toLocaleDateString()}
         </div>
-        
-        {/* Row 5 - as seen in the image, but empty on the right. Will put Agency Name on the left. */}
-        <div style={styles.detailItem}>
-          <strong style={styles.bold}>Agency Name</strong> {batch.agencyName}
-        </div>
-        <div style={styles.detailItem}></div> {/* Empty cell to match image layout */}
-
-        {/* Original fields not explicitly laid out in the image grid, keeping them at the end. */}
         <div style={styles.detailItem}>
           <strong style={styles.bold}>Contract ID:</strong> {batch.contractId}
         </div>
@@ -163,9 +143,32 @@ const Invoice = ({ batch }) => {
             <strong style={styles.bold}>Bid Value:</strong> ₹{batch.bidValue.toLocaleString()}
           </div>
         )}
-        <div style={styles.detailItem}>
-          <strong style={styles.bold}>Contractor Amount:</strong> {batch.contractorValue ? `₹${batch.contractorValue.toLocaleString()}` : 'N/A'}
-        </div>
+      </div>
+      {/* Milestone Table */}
+      <div style={{ margin: '30px 0' }}>
+        <h3 style={{ fontSize: '20px', marginBottom: '10px', color: '#1e3a8a' }}>Milestone Details</h3>
+        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '15px' }}>
+          <thead>
+            <tr style={{ background: '#f8f9fa' }}>
+              <th style={{ border: '1px solid #e0e0e0', padding: '8px' }}>Heading</th>
+              <th style={{ border: '1px solid #e0e0e0', padding: '8px' }}>Contractor Name</th>
+              <th style={{ border: '1px solid #e0e0e0', padding: '8px' }}>Amount</th>
+              <th style={{ border: '1px solid #e0e0e0', padding: '8px' }}>Start Date</th>
+              <th style={{ border: '1px solid #e0e0e0', padding: '8px' }}>End Date</th>
+            </tr>
+          </thead>
+          <tbody>
+            {milestonesToShow && milestonesToShow.map((ms, idx) => (
+              <tr key={idx}>
+                <td style={{ border: '1px solid #e0e0e0', padding: '8px' }}>{ms.heading}</td>
+                <td style={{ border: '1px solid #e0e0e0', padding: '8px' }}>{ms.contractorName}</td>
+                <td style={{ border: '1px solid #e0e0e0', padding: '8px' }}>₹{ms.amount?.toLocaleString()}</td>
+                <td style={{ border: '1px solid #e0e0e0', padding: '8px' }}>{ms.startDate ? new Date(ms.startDate).toLocaleDateString() : '-'}</td>
+                <td style={{ border: '1px solid #e0e0e0', padding: '8px' }}>{ms.endDate ? new Date(ms.endDate).toLocaleDateString() : '-'}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
       <div style={styles.footer}>
         <p style={styles.footerText}>Thank you for your business!</p>

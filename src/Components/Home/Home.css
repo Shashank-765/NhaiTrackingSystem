@@ -4,7 +4,6 @@ html {
 
 .landing-container {
     min-height: 100vh;
-    /* background: #1e3a8a; Dark blue background */
     display: flex;
     flex-direction: column;
   }
@@ -16,19 +15,6 @@ html {
     align-items: center;
     gap: 0;
   }
-  
-  /* .hero-section {
-    background: linear-gradient(135deg, var(--color-azure-20, #036) 25.63%, var(--color-azure-54, #4BA3C7) 74.37%);
-    color: #fff;
-    padding: 5rem 2rem;
-    display: flex;
-    justify-content: space-between; 
-    align-items: center;
-    width: 100%;
-    max-width: none;
-    text-align: left; 
-  } */
-  
   .hero-content {
  font-family: 'Inter', sans-serif;
       font-size: 47px;
@@ -36,13 +22,13 @@ html {
   }
   
   .hero-sub-title {
-    font-size: 18px; /* Smaller font size */
-    color: white; /* Lighter grey color */
+    font-size: 18px; 
+    color: white; 
     margin-bottom: 0.5rem;
     font-weight: 600;
     display: flex;
     align-items: center;
-    gap: 0.5rem; /* Space between icon and text */
+    gap: 0.5rem;
   }
   
   .hero-sub-title .icon {
@@ -53,7 +39,7 @@ html {
   .hero-main-title {
  font-family: 'Inter', sans-serif;
     color: #fff;
-    font-weight: 700; /* Made bolder */
+    font-weight: 700;
     line-height: 1.2;
   }
   h2{
@@ -62,15 +48,15 @@ html {
   .hero-main-title > b{
  font-family: 'Inter', sans-serif;
     font-size: 4.5rem;
-    font-weight: 700; /* Made bolder */
-    color: #facc15; /* Yellow color for "Hyperledger Fabric" */
+    font-weight: 700;
+    color: #facc15;
   }
   .hero-tagline {
  font-family: 'Inter', sans-serif;
-    font-size: 1.5rem; /* Slightly larger */
+    font-size: 1.5rem;
     color: white;
     margin:20px 0px 20px 0px;
-    font-weight: 400; /* Lighter */
+    font-weight: 400;
   }
   
   .hero-description {
@@ -79,7 +65,7 @@ html {
     color: #e0f2fe;
     line-height: 1.6;
     margin-bottom: 1.5rem;
-    font-weight: 400; /* Lighter */
+    font-weight: 400; 
   }
   
   .hero-buttons {
@@ -87,7 +73,7 @@ html {
     margin-bottom: 2rem;
     display: flex;
     gap: 1.5rem;
-    justify-content: flex-start; /* Align buttons to the left */
+    justify-content: flex-start; 
   }
   
   .btn {
@@ -110,41 +96,34 @@ html {
   }
   
   .btn.secondary {
-    /* background-color: #3b82f6; Blue for secondary button */
     border:2px solid white;
     color: #fff;
   }
   
   .btn.secondary:hover {
-    /* background-color: #2563eb; */
     transform: translateY(-2px);
   }
   
   .info-boxes {
     display: flex;
-    justify-content: flex-start; /* Align info boxes to the left */
+    justify-content: flex-start; 
     gap: 1.5rem;
     margin-top: 1rem;
   }
   
   .info-box {
-    background-color: rgba(255, 255, 255, 0.2); /* Adjusted to match image */
+    background-color: rgba(255, 255, 255, 0.2); 
   padding:10px 25px 10px 25px;
     border-radius: 1.75rem;
-    box-shadow: none; /* Removed box-shadow */
+    box-shadow: none; 
     text-align: center;
   }
   
   .info-box p {
-    font-size: 15px; /* Slightly smaller font size */
-    color: #e0f2fe; /* Light blue text for info boxes */
+    font-size: 15px;
+    color: #e0f2fe;
     margin: 0;
-    white-space: nowrap; /* Prevent text wrapping inside the box */
-  }
-  
-  .hero-image-container {
-    flex-shrink: 0;
-    margin-right: 100px;
+    white-space: nowrap;
   }
   
   .features-section {
@@ -242,13 +221,11 @@ html {
 .about-section {
   text-align: center;
   width: 100%;
-  /* background-color: #f8f9fa; */
   border-radius: 1rem;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
 
-.section-content { /* Restoring the global .section-content rule */
-  /* max-width: 1000px; */
+.section-content { 
   margin: 0 auto;
   padding: 4rem;
 }
@@ -256,19 +233,18 @@ html {
 .who-uses-section,
 .faqs-section {
   width: 90%;
-  margin: auto; /* Center the section */
+  margin: auto;
   border-radius: 1rem;
-  /* box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05); */
-  padding: 3rem 2rem; /* Add padding to the section */
+  padding: 3rem 2rem;
   display: flex;
   flex-direction: column;
-  align-items: center; /* Center items horizontally */
+  align-items: center;
 }
 
-.who-uses-section > .section-content { /* Specific override for user roles section content */
+.who-uses-section > .section-content { 
   width: 100%;
-  margin: 0; /* Remove auto margins */
-  padding: 0; /* Remove padding from here as the section itself has it */
+  margin: 0;
+  padding: 0; 
 }
 
 .platform-features-section,
@@ -276,25 +252,21 @@ html {
   text-align: center;
   width: 90%;
   margin: auto;
-  /* background-color: #f8f9fa; */
   border-radius: 1rem;
-  padding: 3rem 2rem; /* Add padding to the section */
+  padding: 3rem 2rem; 
 }
 
 .platform-features-section .section-content {
   width: 100%;
-  /* max-width: 1000px; Constrain content width */
-  margin: 0 auto; /* Center content */
-  padding: 0; /* No padding here as section has padding */
+  margin: 0 auto;
+  padding: 0; 
 }
 
 .feature-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr); /* Exactly 3 equal columns */
+    grid-template-columns: repeat(3, 1fr);
     gap: 2rem;
     margin-top: 2rem;
-    /* max-width: 900px; Constrain the width of the grid */
-    /* margin: 0 auto; Center the grid */
 }
 
 
@@ -311,8 +283,8 @@ html {
 }
 
 .feature-icon {
-  font-size: 2.5rem; /* Large icon size */
-  color: #1e3a8a; /* Dark blue icon color */
+  font-size: 2.5rem;
+  color: #1e3a8a; 
   margin-bottom: 0.5rem;
 }
 
@@ -328,13 +300,11 @@ html {
   color: #4b5563;
   line-height: 1.5;
 }
-
-/* Remove old feature-list styles */
 .platform-features-section .feature-list,
 .platform-features-section .feature-list li,
 .platform-features-section .feature-list li:last-child,
 .platform-features-section .feature-list li::before {
-  display: none; /* Hide old list styles */
+  display: none; 
 }
 
 .key-benefits-section {
@@ -371,16 +341,16 @@ html {
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
-  flex: 1; /* Allow boxes to grow and shrink */
-  min-width: 280px; /* Ensure a minimum width for cards */
+  flex: 1;
+  min-width: 280px;
 }
 
 .user-box:nth-child(1) {
-  border-top-color: #1e3a8a; /* NHAI Admin color */
+  border-top-color: #1e3a8a;
 }
 
 .user-box:nth-child(2) {
-  border-top-color: #3b82f6; /* Agencies color */
+  border-top-color: #3b82f6; 
 }
 
 .user-box:nth-child(3) {
@@ -480,8 +450,6 @@ html {
   color: #4b5563;
   font-size: 1rem;
 }
-
-/* FAQ Collapse functionality styles */
 .faq-item h4 {
   display: flex;
   justify-content: space-between;
@@ -515,19 +483,17 @@ html {
 .faq-item.open .faq-answer {
    font-family: 'Inter', sans-serif;
   font-weight:600;
-  max-height: 100px; /* Adjust based on content height */
+  max-height: 100px;
   padding-top: 0.5rem;
   opacity: 1;
 }
 
-/* Build Trust Section styles */
 .build-trust-section {
   background: linear-gradient(90deg, var(--color-azure-20, #036) 0%, var(--color-azure-54, #4BA3C7) 100%);
   color: #fff;
   padding: 5rem 2rem;
   text-align: center;
   width: 100%;
-  /* Remove margin and box-shadow inherited from general sections if needed */
 }
 
 .build-trust-section .section-content {
@@ -537,14 +503,14 @@ html {
 }
 
 .build-trust-section .section-heading {
-  color: #fff; /* White heading */
+  color: #fff;
   margin-bottom: 1rem;
 }
 
 .build-trust-section .section-description {
-  color: #fff; /* Changed to white */
-  font-size: 20px; /* Adjusted font size */
-  line-height: 1.2; /* Adjusted line height for compactness */
+  color: #fff; 
+  font-size: 20px;
+  line-height: 1.2; 
   margin-bottom: 2rem;
 }
 
@@ -567,16 +533,14 @@ html {
 .build-trust-buttons .btn.secondary {
   background-color: transparent;
   color: #fff;
-  border: 3px solid #fff; /* White border for secondary */
+  border: 3px solid #fff; 
 }
 
 .build-trust-buttons .btn.secondary:hover {
   background-color: rgba(255, 255, 255, 0.1);
 }
-
-/* Ensure the general .section-heading and .section-description are not overriding in build-trust */
 .build-trust-section .section-heading, .build-trust-section .section-description {
-  text-align: center; /* Ensure centered */
+  text-align: center;
 }
 
 .platform-features-section .section-heading .platform-icon {
@@ -587,32 +551,34 @@ html {
 }
 
 .why-contractchain-section {
-  /* background-color: #f8f9fa; */
-  padding: 5rem 2rem;
   display: flex;
-  justify-content: space-between; /* Space between text content and image */
-  align-items: flex-start; /* Align items to the top */
-  width: 90%; /* Reverting to 100% width */
-  margin:auto;
+  flex-direction: row;
+  justify-content: center;
+  align-items: stretch;
+  width: 90%;
+  margin: auto;
   text-align: left;
+  gap: 2rem;
 }
-
-.section-image-container {
-  width: 48%; /* Take almost half the width */
+.section-image-container, .why-contractchain-section .section-content {
+  width: 50%;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }
-
 .section-image {
-  width: 100%;
-  height: 70vh;
+  /* width: 100%; */
+  max-width: 840px;
+  height: auto;
   border-radius: 1rem;
   box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
+  object-fit: cover;
 }
-
 .why-contractchain-section .section-content {
-  width: 48%;
-  text-align: left;
+  padding: 0 1rem;
+  justify-content: center;
 }
-
 .why-contractchain-section .section-heading {
   font-size: 2.5rem;
   text-align:left;
@@ -623,7 +589,7 @@ html {
 
 .why-contractchain-section .section-description {
   font-family: 'Inter', sans-serif;
-  font-size:20px;
+  font-size:26px;
   color: #4b5563;
   line-height: 1.6;
   margin-bottom: 1.5rem;
@@ -651,17 +617,17 @@ html {
 }
 
 .how-it-works-section {
-  width: 90%; /* Match user roles and platform features width */
-  margin: auto; /* Center the section */
+  width: 90%; 
+  margin: auto; 
   border-radius: 1rem;
- padding: 3rem 2rem; /* Add padding to the section */
+ padding: 3rem 2rem;
   text-align: center;
 }
 
 .how-it-works-section .section-content {
   width: 100%;
-  margin: 0; /* Remove auto margins */
-  padding: 0; /* Remove padding from here as the section itself has it */
+  margin: 0; 
+  padding: 0; 
 }
 
 .how-it-works-subtitle {
@@ -689,16 +655,16 @@ html {
 }
 .timeline-item1 {
   display: flex;
-  justify-content: space-between; /* Space between left/right content */
+  justify-content: space-between; 
   margin-bottom: 3rem;
   align-items: center;
   padding: 30px 40px !important;
-  position: relative; /* For absolute positioning of the dot */
+  position: relative;
  width:100% !important;
 }
 
 .timeline-item1:nth-child(even) {
-  flex-direction: row-reverse; /* Alternate content sides */
+  flex-direction: row-reverse;
 }
 
 .timeline-content {
@@ -706,7 +672,7 @@ html {
   padding: 1.5rem;
   border-radius: 0.75rem;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  width: calc(50% - 40px); /* Adjust width to account for dot and spacing */
+  width: calc(50% - 40px); 
 }
 
 .timeline-content h4 {
@@ -727,14 +693,14 @@ html {
   text-align: right;
   position:absolute;
   right:516px;
-   /* Align text right for left-side content */
+
 }
 
 .timeline-item1:nth-child(even) .timeline-content {
   text-align: left;
   position:absolute;
   width:90%;
-  left:516px; /* Align text left for right-side content */
+  left:516px; 
 }
 
 .timeline-dot {
@@ -744,15 +710,17 @@ html {
   border-radius: 50%;
   position: absolute;
   left: 50%;
-  transform: translateX(-50%) translateY(-50%); /* Center horizontally and vertically */
-  top: 50%; /* Start vertical centering */
+  transform: translateX(-50%) translateY(-50%); 
+  top: 50%; 
   flex-shrink: 0;
-  z-index: 1; /* Ensure dot is on top of the line */
+  z-index: 1; 
 }
 
 .section2{
   background-color: #f8f9fa;
   width:100%;
+  margin:30px 0px 30px 0px;
+  padding:20px 0px 20px 0px;
 }
 
 .hero-buttons{
@@ -874,15 +842,107 @@ html {
 }
 
 
-@media (max-width: 1250px) and (min-width: 1200px) {
-  .hero-container{
-    width:100%;
-    margin:auto;
+@media (max-width: 1440px) and (min-width:1250px){
+  .logocontainercompany{
+    margin-left:80px;
+  }
+  .hero-container {
+    width: 90%;
+    margin: auto;
+    align-items: center;
+    justify-content: space-between;
+    gap: 40px;
+    display: flex;
+  }
+  .hero-image-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .hero-image {
+    max-width: 38vw;
+    min-width: 220px;
+    width: 100%;
+    height: auto;
+    border-radius: 1rem;
+    object-fit: contain;
   }
   .info-box p {
     font-size: 11px;
   }
+  .hero-text{
+    margin-left:10px;
+  }
+  .hero-text h1 {
+    width: 53vw;
+    font-size: 40px;
+  }
+  .description {
+    font-size: 15px;
+  }
+  .timeline-item1:nth-child(odd) .timeline-content {
+    width: 55%;
+    text-align: right;
+    position: absolute;
+    right: 545px;
+  }
 
+  .timeline-item1:nth-child(even) .timeline-content {
+    width: 55%;
+    text-align: right;
+    position: absolute;
+    left: 545px;
+  }
+
+  .why-contractchain-section .section-heading {
+    font-size: 20px;
+  }
+
+  .why-contractchain-section .section-description {
+    font-size: 14px;
+  }
+
+  .milestone-box {
+    padding: 15px 25px 15px 25px;
+  }
+
+  .milestone-subtext, .milestone-text {
+    font-size: 14px;
+  }
+  .section-content {
+    padding: 30px !important;
+  }
+}
+@media (max-width: 1250px) and (min-width: 1200px) {
+  .hero-container {
+    width: 100%;
+    margin: auto;
+    align-items: center;
+    justify-content: space-between;
+    gap: 40px;
+    display: flex;
+  }
+  .hero-image-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .hero-image {
+    max-width: 38vw;
+    min-width: 220px;
+    width: 100%;
+    height: auto;
+    border-radius: 1rem;
+    object-fit: contain;
+  }
+  .info-box p {
+    font-size: 11px;
+  }
+  .hero-text{
+    margin-left:10px;
+  }
   .hero-text h1 {
     width: 53vw;
     font-size: 40px;
@@ -893,7 +953,6 @@ html {
   .description {
     font-size: 15px;
   }
-
   .timeline-item1:nth-child(odd) .timeline-content {
     width: 50%;
     text-align: right;
@@ -928,15 +987,44 @@ html {
     padding: 30px !important;
   }
 }
-@media (max-width: 1200px) and (min-width: 992px) {
-
+@media (max-width: 1200px) and (min-width: 1024px) {
+  .hero-container {
+    width: 100%;
+    margin: auto;
+    align-items: center;
+    justify-content: space-between;
+    gap: 40px;
+    display: flex;
+  }
+  .hero-image-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .hero-image {
+    max-width: 36vw;
+    min-width: 180px;
+    width: 100%;
+    height: auto;
+    border-radius: 1rem;
+    object-fit: contain;
+  }
+  .hero-text {
+    margin-left: 10px;
+  }
   .info-box p {
     font-size: 11px;
   }
-
   .hero-text h1 {
     width: 53vw;
     font-size: 40px;
+  }
+  .logocontainercompany{
+    margin-left:10px;
+  }
+  .description {
+    font-size: 15px;
   }
   .timeline-item1:nth-child(odd) .timeline-content {
     width: 45%;
@@ -973,20 +1061,44 @@ html {
   }
 }
 @media (max-width: 1024px) and (min-width: 992px) {
-  .info-box p {
-    font-size: 12px;
+  .hero-container {
+    width: 100%;
+    margin: auto;
+    align-items: center;
+    justify-content: space-between;
+    gap: 32px;
+    display: flex;
   }
-
+  .hero-image-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .hero-image {
+    max-width: 32vw;
+    min-width: 140px;
+    width: 100%;
+    height: auto;
+    border-radius: 1rem;
+    object-fit: contain;
+  }
+  .hero-text {
+    margin-left: 8px;
+  }
+  .info-box p {
+    font-size: 9px;
+  }
   .hero-text h1 {
     width: 53vw;
-    font-size: 45px;
+    font-size: 32px;
   }
-
+  .logocontainercompany{
+    margin-left:8px;
+  }
   .description {
-    width: 90vw;
-    font-size: 16px;
+    font-size: 12px;
   }
-
   .timeline-item1:nth-child(odd) .timeline-content {
     width: 50%;
     text-align: right;
@@ -1023,20 +1135,49 @@ html {
 }
 
 @media (max-width: 992px) and (min-width: 768px) {
-  .info-box p {
-    font-size: 12px;
+  .logocontainercompany{
+    margin-left:0px;
   }
-
-  .hero-text h1 {
-    width: 53vw;
-    font-size: 42px;
+  .hero-container {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    width: 100%;
   }
-
-  .description {
-    width: 90vw;
+  .hero-text {
+    flex: 0 0 50%;
+    max-width: 50%;
+    margin-left: 0;
     font-size: 15px;
   }
-
+  .hero-text h1 {
+    font-size: 22px;
+    width: 100%;
+  }
+  .description {
+    font-size: 11px;
+  }
+  .hero-image-container {
+    flex: 0 0 50%;
+    max-width: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 0;
+  }
+  .hero-image {
+    max-width: 90%;
+    min-width: 100px;
+    width: 100%;
+    height: auto;
+    border-radius: 1rem;
+    object-fit: contain;
+  }
+  .info-box p {
+    font-size: 9px;
+  }
   .timeline-item1:nth-child(odd) .timeline-content {
     width: 46%;
     text-align: right;
@@ -1050,14 +1191,27 @@ html {
     position: absolute;
     left: 400px;
   }
-
-  .why-contractchain-section .section-heading {
-    font-size: 16px;
+  .why-contractchain-section {
+    flex-direction: column;
+    align-items: center;
+    gap: 1.5rem;
+    width: 100%;
+    padding: 2rem 0.5rem;
   }
-
-  .why-contractchain-section .section-description {
-    font-size: 11px;
+  .section-image-container, .why-contractchain-section .section-content {
+    width: 100%;
+    padding: 0;
+    min-width: 0;
   }
+  .section-image {
+    max-width: 100vw;
+    height: 200px;
+    width: 100%;
+    object-fit: cover;
+  }
+  .why-contractchain-section .section-content {
+    padding: 0 0.5rem;
+  } 
 
   .milestone-box {
     padding: 10px 20px 10px 20px;
@@ -1073,6 +1227,9 @@ html {
 }
 
 @media (max-width: 768px) and (min-width:575px) {
+  .logocontainercompany{
+    margin-left:0px;
+  }
   .info-box p {
     font-size: 9px;
   }
@@ -1123,27 +1280,42 @@ padding:0px;
     padding: 20px !important;
   }
 }
-
 @media (max-width: 576px) and (min-width:375px) {
+  .logocontainercompany{
+    margin-left:0px;
+  }
+  .why-contractchain-section .section-description {
+    font-family: 'Inter', sans-serif;
+    font-size: 15px;
+  }
+  .hero-text h1 {
+    width: 85vw;
+    font-size: 26px;
+    font-weight: 700;
+  }
+  .info-boxes {
+    display: grid;
+    justify-content: flex-start;
+    gap: 1.5rem;
+    margin-top: 1rem;
+  }
   .info-box p {
       font-size: 8px;
   }
-  .why-contractchain-section .section-content {
-    width: 60%;
-    text-align: left;
-}
+
 .timeline-item1:nth-child(odd) .timeline-content {
-  width: 60%;
+  width: 50%;
   text-align: right;
   position: absolute;
-  right: 240px;
+  right: 200px;
 }
 .timeline-item1:nth-child(even) .timeline-content {
-  width: 60%;
+  width: 50%;
   text-align: right;
   position: absolute;
-  left: 240px;
+  left: 200px;
 }
+
 .platform-features-section, .use-case-section{
   text-align: center;
   width: 90%;
@@ -1154,4 +1326,117 @@ padding:0px;
 .section-heading {
   font-size:28px;
 }
+.feature-grid {
+display:block;
+  margin: 10px 0px 10px 0px;
+}
+.hero-image{
+  width:100%;
+  height:100%;
+}
+.feature-item{
+  margin:20px 0px 20px 0px;
+}
+.why-contractchain-section {
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  width: 100%;
+  padding: 1rem 0.2rem;
+}
+.section-image-container, .why-contractchain-section .section-content {
+  width: 100%;
+  padding: 0;
+}
+.section-image {
+  max-height: 30vh;
+}
+.why-contractchain-section .section-content {
+  padding: 0 0.2rem;
+}
+}
+@media (max-width: 375px) {
+  .hero-image{
+    width:100%;
+    height:100%;
+  }
+  .why-contractchain-section .section-description {
+    font-family: 'Inter', sans-serif;
+    font-size: 12px;
+  }
+  .milestone-box {
+    background-color: #d4edda;
+    border-left: 5px solid #28a745;
+    padding: 10px 20px 20px 20px;
+  }
+  .milestone-subtext{
+    font-size:12px;
+  }
+  .feature-item{
+    margin:20px 0px 20px 0px;
+  }
+  .section-heading {
+    font-size: 18px;
+}
+  .hero-text h1 {
+    width: 85vw;
+    font-size: 26px;
+    font-weight: 700;
+  }
+  .description {
+    width: 90vw;
+    font-size: 9px;
+  }
+  .info-boxes {
+    display: grid;
+    justify-content: flex-start;
+    gap: 1.5rem;
+    margin-top: 1rem;
+  }
+  .get-started {
+    background-color: white;
+    color: #0f172a;
+    border: none;
+    padding: 8px 8px;
+  }
+  .watch-demo {
+    background-color: transparent;
+    border: 1px solid #e2e8f0;
+    color: white;
+    padding: 8px 8px;
+  }
+  .why-contractchain-section .section-heading {
+    font-size: 26px;
+  }
+  .feature-grid {
+    display: block;
+    margin: 10px 0px 10px 0px;
+  }
+  .timeline-item1:nth-child(odd) .timeline-content {
+    width: 60%;
+    text-align: right;
+    position: absolute;
+    right: 151px;
+  }
+  .timeline-item1:nth-child(even) .timeline-content {
+    width: 60%;
+    text-align: right;
+    position: absolute;
+    left: 151px;
+  }
+  .logocontainercompany {
+    margin-left:0px;
+    font-size:26px;
+  }
+  .section-content{
+    padding:0px;
+  }
+  faqs-section .faq-items {
+    text-align:left;
+    margin:auto;
+    width:100%;
+  }
+  .faq-item h4{
+    font-size:15px;
+  }
 }

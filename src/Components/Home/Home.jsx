@@ -42,35 +42,37 @@ const Home = () => {
         </motion.section> */}
 <div className="header">
          <section className="hero-section">
-      <div className="hero-container">
-        <div className="hero-text">
-          <p className="breadcrumb"><img src={vector2} alt="ContractChain Logo" style={{ width: '20px', height: '20px', verticalAlign: 'middle', marginRight: '5px' }} /> ContractChain NHAI</p>
-          <h1>
-            Transparent<br></br> Infrastructure Project<br></br> Tracking with <br></br><span className="highlight">Hyperledger Fabric</span>
-          </h1>
-          <p className="subheading">Digitize. Track. Trust.</p>
-          <p className="description">
-            ContractChain empowers NHAI, Agencies, and Contractors with a secure, <br></br>blockchain-based platform to manage
-            infrastructure projects from initiation to<br></br> execution.
-          </p>
-         <div className="info-boxes">
-              <div className="info-box">
-                <p>🔗 Powered by Hyperledger Fabric</p>
+      <div className="hero-container-wrapper">
+        <div className="hero-container">
+          <div className="hero-text">
+            <p className="breadcrumb"><img src={vector2} alt="ContractChain Logo" style={{ width: '20px', height: '20px', verticalAlign: 'middle', marginRight: '5px' }} /> ContractChain NHAI</p>
+            <h1>
+              Transparent<br></br> Infrastructure Project<br></br> Tracking with <br></br><span className="highlight">Hyperledger Fabric</span>
+            </h1>
+            <p className="subheading">Digitize. Track. Trust.</p>
+            <p className="description">
+              ContractChain empowers NHAI, Agencies, and Contractors with a secure, <br></br>blockchain-based platform to manage
+              infrastructure projects from initiation to<br></br> execution.
+            </p>
+           <div className="info-boxes">
+                <div className="info-box">
+                  <p>🔗 Powered by Hyperledger Fabric</p>
+                </div>
+                <div className="info-box">
+                  <p>🔍 100% Transparent</p>
+                </div>
+                <div className="info-box">
+                  <p>🔐 Role-Based Access</p>
+                </div>
               </div>
-              <div className="info-box">
-                <p>🔍 100% Transparent</p>
-              </div>
-              <div className="info-box">
-                <p>🔐 Role-Based Access</p>
-              </div>
+            <div className="cta-buttons">
+              <button className="get-started">Get Started</button>
+              <button className="watch-demo">Watch Demo</button>
             </div>
-          <div className="cta-buttons">
-            <button className="get-started">Get Started</button>
-            <button className="watch-demo">Watch Demo</button>
           </div>
-        </div>
-        <div className="hero-image-container">
-          <img src={imageBanner} alt="Infrastructure Project Tracking Dashboard" className="hero-image" style={{width:"40vw"}} />
+          <div className="hero-image-container">
+            <img src={imageBanner} alt="Infrastructure Project Tracking Dashboard" className="hero-image" />
+          </div>
         </div>
       </div>
     </section>
@@ -98,7 +100,7 @@ const Home = () => {
                 automated, transparent, and tamper-proof tracking system —
                 monitored in real-time by all stakeholders.</p>
               <div className="milestone-box">
-                <p className="milestone-text"><img src={tickimage} alt="Milestone Tick" style={{ width: '16px', height: '16px', marginRight: '5px', verticalAlign: 'middle' }} /> Milestone Monitoring</p>
+                <p className="milestone-text"><img src={tickimage} alt="Milestone Tick"/> Milestone Monitoring</p>
                 <p className="milestone-subtext">Track project progress against defined deliverables.</p>
               </div>
             </div>

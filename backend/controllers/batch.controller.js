@@ -99,6 +99,20 @@ const createBatch = async (req, res) => {
         batchId: newBatch._id,
       }
     );
+
+    console.log('Sending contractor notification to:', `batch-created-${newBatch.contractorId}`);
+    console.log('ContractorId:', newBatch.contractorId, 'Type:', typeof newBatch.contractorId);
+    await pusher.trigger(
+      "contractor-channel",
+      `batch-created-${newBatch.contractorId}`,
+      {
+        id: `batch-created-${Date.now()}`,
+        message: `Contract of ${newBatch.contractTitle} has been created for you!`,
+        timestamp: new Date().toISOString(),
+        type: "batch-creation",
+        batchId: newBatch._id,
+      }
+    );
     
     res.status(201).json({
       success: true,
@@ -230,9 +244,10 @@ const updateBatchStatus = async (req, res) => {
     // });
 
     // Send notification to admin for this batch
+    const contractorName = batch.milestones[0]?.contractorName || "Unknown Contractor";
     await pusher.trigger("admin-channel", `batch-approved-${batch.adminId}`, {
       id: `batch-approved-${Date.now()}`,
-      message: `Contract for ${batch.contractTitle} has been given to ${batch.contractorName}!`,
+      message: `Contract for ${batch.contractTitle} has been given to ${contractorName}!`,
       timestamp: new Date().toISOString(),
       type: "batch-approval",
       batchId: batch._id,
@@ -258,6 +273,7 @@ const updateWorkDetails = async (req, res) => {
     const { workStatus, workDetails } = req.body;
 
     const batch = await Batch.findById(id);
+    console.log(batch,"batchnotification");
     if (!batch) {
       return res.status(404).json({
         success: false,
@@ -284,7 +300,6 @@ const updateWorkDetails = async (req, res) => {
     // Handle notifications based on work status changes
     if (workStatus !== previousStatus) {
       let notificationMessage = "";
-      
       switch (workStatus) {
         case "30_percent":
           notificationMessage = `${batch.contractorName} has completed 30% of ${batch.contractTitle}`;
@@ -300,10 +315,12 @@ const updateWorkDetails = async (req, res) => {
 
       if (notificationMessage) {
         // Notify admin
+        const contractorName = batch.milestones[0]?.contractorName || "Unknown Contractor";
+        console.log("Sending admin work-status-update notification for batch:", batch._id, "workStatus:", workStatus);
         await pusher.trigger("admin-channel", "work-status-update", {
           message: notificationMessage,
           batchId: batch._id,
-          contractorName: batch.contractorName,
+          contractorName: contractorName,
           batchTitle: batch.contractTitle,
           workStatus: workStatus,
           timestamp: new Date().toISOString(),
@@ -314,7 +331,7 @@ const updateWorkDetails = async (req, res) => {
           id: `work-${Date.now()}`,
           message: notificationMessage,
           batchId: batch._id,
-          contractorName: batch.contractorName,
+          contractorName: contractorName,
           batchTitle: batch.contractTitle,
           workStatus: workStatus,
           timestamp: new Date().toISOString(),
@@ -390,13 +407,14 @@ const approveWork = async (req, res) => {
     );
 
     // Notify admin
+    const contractorName = batch.milestones[0]?.contractorName || "Unknown Contractor";
     await pusher.trigger("admin-channel", "work-approved", {
       id: `app-${Date.now()}`,
       message: `Work for milestone "${milestone.heading}" in ${batch.contractTitle} has been approved.`,
       timestamp: new Date().toISOString(),
       type: "work-approval",
       batchId: batch._id,
-      contractorName: milestone.contractorName,
+      contractorName: contractorName,
       milestoneIndex: milestoneIndex,
       milestoneHeading: milestone.heading
     });
@@ -408,7 +426,7 @@ const approveWork = async (req, res) => {
       timestamp: new Date().toISOString(),
       type: "work-approval",
       batchId: batch._id,
-      contractorName: milestone.contractorName,
+      contractorName: contractorName,
       milestoneIndex: milestoneIndex,
       milestoneHeading: milestone.heading
     });
@@ -462,11 +480,12 @@ const downloadInvoice = async (req, res) => {
 
     // Send notification
     const timestamp = new Date();
+    const contractorName = batch.milestones[0]?.contractorName || "Unknown Contractor";
     await pusher.trigger('admin-channel', 'invoice-downloaded', {
       id: `inv-${Date.now()}`,
-      message: `${batch.contractorName} has downloaded invoice for ${batch.contractTitle}`,
+      message: `${contractorName} has downloaded invoice for ${batch.contractTitle}`,
       batchId: batch._id,
-      contractorName: batch.contractorName,
+      contractorName: contractorName,
       contractTitle: batch.contractTitle,
       timestamp: timestamp.toISOString(),
       downloadedBy: isAdmin ? 'admin' : 'contractor'
@@ -478,7 +497,7 @@ const downloadInvoice = async (req, res) => {
       message: `Invoice downloaded successfully (${isAdmin ? 'admin' : 'contractor'}).`,
       data: {
         contractTitle: batch.contractTitle,
-        contractorName: batch.contractorName,
+        contractorName: contractorName,
         bidValue: batch.bidValue,
         downloadedBy: isAdmin ? 'admin' : 'contractor',
         timestamp: timestamp.toISOString()
@@ -651,12 +670,16 @@ const updateMilestoneStatus = async (req, res) => {
     await batch.save();
 
     // Send notification to admin
+    const milestone = batch.milestones[milestoneIndex];
+    const contractorName = milestone?.contractorName || "Unknown Contractor";
+    const milestoneHeading = milestone?.heading || "Unknown Task";
     await pusher.trigger("admin-channel", "milestone-status-update", {
-      message: `Milestone status updated for ${batch.contractTitle}`,
+      message: `${contractorName} has "${milestoneHeading}" milestone  ${workStatus} (${batch.contractTitle})`,
       batchId: batch._id,
-      contractorName: batch.contractorName,
+      contractorName: contractorName,
       batchTitle: batch.contractTitle,
       milestoneIndex: milestoneIndex,
+      milestoneHeading: milestoneHeading,
       workStatus: workStatus,
       timestamp: new Date().toISOString(),
     });
@@ -664,10 +687,9 @@ const updateMilestoneStatus = async (req, res) => {
     // Send notification to agency
     await pusher.trigger(`agency-channel`, `milestone-status-update-${batch.agencyId}`, {
       id: `milestone-${Date.now()}`,
-      message: `Milestone status updated for ${batch.contractTitle}`,
-      batchId: batch._id,
-      contractorName: batch.contractorName,
-      batchTitle: batch.contractTitle,
+      message: `Milestone status updated for ${batch.batchTitle}`,
+      contractorName: contractorName,
+      batchTitle: batch.batchTitle,
       milestoneIndex: milestoneIndex,
       workStatus: workStatus,
       timestamp: new Date().toISOString(),

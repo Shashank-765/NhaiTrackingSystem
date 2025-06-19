@@ -52,7 +52,10 @@ const Notification = () => {
 
     return notifications.map((notification) => (
       <li key={notification.id} className={`notification ${notification.type || ''}`}>
-        <div className="notification-message">{notification.message}</div>
+        <div className="notification-message">
+          {notification.message ||
+            `${notification.contractorName || "Contractor"} ne milestone update kiya (${notification.workStatus || ""})`}
+        </div>
         <div className="notification-meta">
           <div className="notification-time">
             {formatDateTime(notification.timestamp)} ({getTimeAgo(notification.timestamp)})

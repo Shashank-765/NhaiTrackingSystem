@@ -193,7 +193,6 @@ const [userTotalPages, setUserTotalPages] = useState(1);
   };
 
   const initiateStatusUpdate = (batchId, currentStatus) => {
-    // Only allow status update if current status is pending
     if (currentStatus.toLowerCase() !== "pending") {
       toast.warning("Only pending batches can be updated");
       return;
@@ -219,8 +218,6 @@ const [userTotalPages, setUserTotalPages] = useState(1);
     const updatedBatches = [...batches];
     const originalStatus = updatedBatches[batchIndex].status;
     updatedBatches[batchIndex].status = newStatus;
-    
-    // Update milestone statuses if needed
     if (updatedBatches[batchIndex].milestones) {
       updatedBatches[batchIndex].milestones = updatedBatches[batchIndex].milestones.map(milestone => ({
         ...milestone,
@@ -252,10 +249,8 @@ const [userTotalPages, setUserTotalPages] = useState(1);
 
       if (data.success) {
         toast.success(`Batch status updated to ${newStatus}`);
-        // Refresh the batches to get the latest data
         fetchBatches();
       } else {
-        // Revert optimistic update on failure
         updatedBatches[batchIndex].status = originalStatus;
         if (updatedBatches[batchIndex].milestones) {
           updatedBatches[batchIndex].milestones = updatedBatches[batchIndex].milestones.map(milestone => ({

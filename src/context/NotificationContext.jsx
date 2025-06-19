@@ -93,6 +93,22 @@ export const NotificationProvider = ({ children }) => {
         };
         addNotification(notification);
       });
+
+      currentChannel.bind("work-status-update", (data) => {
+        console.log("[PUSHER] Admin received work-status-update:", data);
+        addNotification({
+          ...data,
+          type: "work-status-update"
+        });
+      });
+
+      currentChannel.bind("milestone-status-update", (data) => {
+        console.log("[PUSHER] Admin received milestone-status-update:", data);
+        addNotification({
+          ...data,
+          type: "milestone-status-update"
+        });
+      });
     } else if (user.role.toLowerCase() === "agency") {
       currentChannel = pusher.subscribe("agency-channel");
       // Listen for batch creation notifications from admin
@@ -117,7 +133,7 @@ export const NotificationProvider = ({ children }) => {
         addNotification(notification);
       });
       // Listen for batch creation notifications
-      currentChannel.bind(`batch-created-${user.id}`, (data) => {
+      currentChannel.bind(`batch-created-${user._id}`, (data) => {
         const notification = {
           id: data.id,
           message: data.message,
@@ -151,6 +167,20 @@ export const NotificationProvider = ({ children }) => {
       });
     } else if (user.role.toLowerCase() === "contractor") {
       currentChannel = pusher.subscribe("contractor-channel");
+      const contractorId = user._id || user.id; // fallback if _id not present
+      console.log("[PUSHER] Contractor subscribing to:", `batch-created-${contractorId}`);
+      // Listen for batch-created notifications
+      currentChannel.bind(`batch-created-${contractorId}`, (data) => {
+        console.log("[PUSHER] Contractor received batch-created notification:", data);
+        const notification = {
+          id: data.id,
+          message: data.message,
+          timestamp: data.timestamp,
+          type: "batch-creation",
+          batchId: data.batchId,
+        };
+        addNotification(notification);
+      });
       // Listen for payment notifications
       currentChannel.bind(`payment-completed-${user.id}`, (data) => {
         const notification = {
@@ -223,14 +253,17 @@ export const NotificationProvider = ({ children }) => {
           (notif) =>
             notif.type === "invoice-download" ||
             notif.type === "batch-approval" ||
-            notif.type === "agency-payment"
+            notif.type === "agency-payment" ||
+            notif.type === "work-status-update" ||
+            notif.type === "milestone-status-update"
         );
       case "contractor":
         return notifications.filter(
           (notif) =>
             notif.type === "payment" ||
             notif.type === "work-approval" ||
-            notif.type === "batch-approval"
+            notif.type === "batch-approval" ||
+            notif.type === "batch-creation"
         );
       case "agency":
         return notifications.filter(
