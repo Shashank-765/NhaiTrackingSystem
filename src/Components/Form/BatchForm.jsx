@@ -450,7 +450,6 @@ const BatchForm = ({ handleCloseBatchForm }) => {
                         placeholder="Enter milestone heading"
                       />
                     </div>
-                    
                     <div className="form-group">
                       <label>Contractor:</label>
                       <select
@@ -465,14 +464,33 @@ const BatchForm = ({ handleCloseBatchForm }) => {
                         ))}
                       </select>
                     </div>
+
+                     <div className="form-group">
+                      <label>bid duration:</label>
+                      <input
+                        type="number"
+                        value={milestone.amount}
+                        onChange={(e) => handleMilestoneChange(index, 'amount', e.target.value)}
+                        placeholder="Enter bid duration provided by agency"
+                      />
+                    </div>
                     
+                     <div className="form-group">
+                      <label>bid amount:</label>
+                      <input
+                        type="number"
+                        value={milestone.amount}
+                        onChange={(e) => handleMilestoneChange(index, 'amount', e.target.value)}
+                        placeholder="Enter bid amount"
+                      />
+                    </div>
                     <div className="form-group">
                       <label>Contractor Amount:</label>
                       <input
                         type="number"
                         value={milestone.amount}
                         onChange={(e) => handleMilestoneChange(index, 'amount', e.target.value)}
-                        placeholder="Enter milestone amount"
+                        placeholder="Enter milestone amount for contractor"
                       />
                     </div>
                     

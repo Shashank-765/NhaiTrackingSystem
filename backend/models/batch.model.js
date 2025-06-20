@@ -11,18 +11,6 @@ const batchSchema = new mongoose.Schema(
       required: [true, "Contract ID is required"],
       unique: true,
     },
-    bidValue: {
-      type: Number,
-      required: [true, "Bid value is required"],
-    },
-    contractorValue: {
-      type: Number,
-      required: false,
-    },
-    bidDuration: {
-      type: String,
-      required: false,
-    },
     agencyName: {
       type: String,
       required: [true, "Agency name is required"],
@@ -42,10 +30,6 @@ const batchSchema = new mongoose.Schema(
       enum: ["pending", "approved", "rejected"],
       default: "pending",
     },
-    workDetails: {
-      type: String,
-      default: "",
-    },
     completedAt: {
       type: Date,
     },
@@ -53,43 +37,20 @@ const batchSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
-    agencyToNhaiTransactionId: {
-      type: String,
-      default: "",
-    },
-    agencyToNhaiTransactionDate: {
-      type: Date,
-    },
-    agencyToNhaiPaymentMedia: {
-      type: String,
-      default: "",
-    },
-    agencyToNhaiPaymentStatus: {
-      type: String,
-      enum: ["pending", "completed"],
-      default: "pending",
-    },
-    nhaiToContractorTransactionId: {
-      type: String,
-      default: "",
-    },
-    nhaiToContractorTransactionDate: {
-      type: Date,
-    },
-    nhaiToContractorPaymentMedia: {
-      type: String,
-      default: "",
-    },
-    nhaiToContractorPaymentStatus: {
-      type: String,
-      enum: ["pending", "completed"],
-      default: "pending",
-    },
+
     milestones: [
       {
         heading: {
           type: String,
           required: [true, "Milestone heading is required"],
+        },
+        bidAmount: {
+          type: Number,
+          required: [true, "Bid amount is required"],
+        },
+        bidDuration: {
+        type: String,
+        required: false,
         },
         contractorId: {
           type: mongoose.Schema.Types.ObjectId,
@@ -108,7 +69,7 @@ const batchSchema = new mongoose.Schema(
           type: Date,
           required: [true, "Start date is required"],
           validate: {
-            validator: function(v) {
+            validator: function (v) {
               return v instanceof Date && !isNaN(v);
             },
             message: "Start date must be a valid date"
@@ -118,7 +79,7 @@ const batchSchema = new mongoose.Schema(
           type: Date,
           required: [true, "End date is required"],
           validate: {
-            validator: function(v) {
+            validator: function (v) {
               return v instanceof Date && !isNaN(v);
             },
             message: "End date must be a valid date"
@@ -134,10 +95,6 @@ const batchSchema = new mongoose.Schema(
           enum: ["pending", "30_percent", "80_percent", "completed"],
           default: "pending"
         },
-        workDetails: {
-          type: String,
-          default: ""
-        },
         workApproved: {
           type: Boolean,
           default: false,
@@ -146,22 +103,46 @@ const batchSchema = new mongoose.Schema(
         completedAt: {
           type: Date
         },
-        nhaiToContractorPaymentStatus: {
-          type: String,
-          enum: ["pending", "completed"],
-          default: "pending"
-        },
-        nhaiToContractorTransactionId: {
-          type: String,
-          default: ""
-        },
-        nhaiToContractorTransactionDate: {
-          type: Date
-        },
-        nhaiToContractorPaymentMedia: {
-          type: String,
-          default: ""
-        }
+        nhaiToContactor: [
+          {
+            nhaiToContactorTransactionId: {
+              type: String,
+              default: "",
+            },
+            nhaiToContactorTransactionDate: {
+              type: Date
+            },
+            nhaiToContactorPaymentMedia: {
+              type: String,
+              default: ""
+            },
+            nhaiToContactorPaymentStatus: {
+              type: String,
+              enum: ["pending", "completed"],
+              default: "pending"
+            }
+          }
+        ],
+        agencytoNhai: [
+          {
+            agencytoNhaiTransactionId: {
+              type: String,
+              default: "",
+            },
+            agencytoNhaiTransactionDate: {
+              type: Date
+            },
+            agencytoNhaiPaymentMedia: {
+              type: String,
+              default: ""
+            },
+            agencytoNhaiPaymentStatus: {
+              type: String,
+              enum: ["pending", "completed"],
+              default: "pending"
+            }
+          }
+        ]
       },
     ],
   },
@@ -171,12 +152,12 @@ const batchSchema = new mongoose.Schema(
 );
 
 // Add a pre-save middleware to validate milestone dates
-batchSchema.pre('save', function(next) {
+batchSchema.pre('save', function (next) {
   if (this.milestones && this.milestones.length > 0) {
     for (let i = 0; i < this.milestones.length; i++) {
       const milestone = this.milestones[i];
       if (milestone.startDate && milestone.endDate) {
-        if (milestone.endDate < milestone.startDate) {  
+        if (milestone.endDate < milestone.startDate) {
           next(new Error(`Milestone ${i + 1}: End date must be after start date`));
           return;
         }
@@ -187,3 +168,4 @@ batchSchema.pre('save', function(next) {
 });
 
 module.exports = mongoose.model("Batch", batchSchema);
+
