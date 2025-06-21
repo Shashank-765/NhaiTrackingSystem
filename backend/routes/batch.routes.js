@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { createBatch, getAllBatches, getBatchById, updateBatchStatus, updateWorkDetails, approveWork, updatePaymentInfo, updateMilestoneStatus, downloadInvoice } = require('../controllers/batch.controller');
+const { createBatch, getAllBatches, getBatchById, updateBatchStatus, updateWorkDetails, approveWork, updatePaymentInfo, updateMilestoneStatus, downloadInvoice, trackInvoiceDownload, notifyInvoiceDownload } = require('../controllers/batch.controller');
 const { protect, isAdmin } = require('../middleware/auth.middleware');
 const Batch = require('../models/batch.model');
 const Pusher = require('pusher');
@@ -67,5 +67,11 @@ router.get('/:id/invoice/download', protect, downloadInvoice);
 
 // Update milestone status (protected route)
 router.patch('/:id/milestone-status', updateMilestoneStatus);
+
+// Track invoice download
+router.patch('/:id/track-invoice-download', protect, trackInvoiceDownload);
+
+// Notify invoice download
+router.post('/:id/notify-invoice-download', protect, notifyInvoiceDownload);
 
 module.exports = router;

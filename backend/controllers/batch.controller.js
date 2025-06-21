@@ -774,6 +774,103 @@ const updateMilestoneStatus = async (req, res) => {
   }
 };
 
+const trackInvoiceDownload = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { userId, userRole } = req.body;
+
+    const batch = await Batch.findById(id);
+    if (!batch) {
+      return res.status(404).json({
+        success: false,
+        message: "Batch not found",
+      });
+    }
+
+    // Add download tracking information
+    const downloadRecord = {
+      userId: userId,
+      userRole: userRole,
+      downloadedAt: new Date(),
+    };
+
+    if (!batch.invoiceDownloads) {
+      batch.invoiceDownloads = [];
+    }
+    batch.invoiceDownloads.push(downloadRecord);
+
+    await batch.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Invoice download tracked successfully",
+      data: downloadRecord,
+    });
+  } catch (error) {
+    console.error("Error in trackInvoiceDownload:", error);
+    res.status(500).json({
+      success: false,
+      message: "Error tracking invoice download",
+      error: error.message,
+    });
+  }
+};
+
+const notifyInvoiceDownload = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { userId, userRole, userName } = req.body;
+
+    const batch = await Batch.findById(id);
+    if (!batch) {
+      return res.status(404).json({
+        success: false,
+        message: "Batch not found",
+      });
+    }
+
+    // Send notification to admin about invoice download
+    await pusher.trigger("admin-channel", "invoice-downloaded", {
+      id: `invoice-download-${Date.now()}`,
+      message: `${userName || 'User'} (${userRole}) downloaded invoice for contract "${batch.contractTitle}"`,
+      timestamp: new Date().toISOString(),
+      type: "invoice-download",
+      batchId: batch._id,
+      contractTitle: batch.contractTitle,
+      userId: userId,
+      userRole: userRole,
+      userName: userName
+    });
+
+    // Send notification to agency if user is not agency
+    if (userRole !== 'agency') {
+      await pusher.trigger(`agency-channel`, `invoice-downloaded-${batch.agencyId}`, {
+        id: `invoice-download-${Date.now()}`,
+        message: `Invoice downloaded for contract "${batch.contractTitle}" by ${userName || 'User'} (${userRole})`,
+        timestamp: new Date().toISOString(),
+        type: "invoice-download",
+        batchId: batch._id,
+        contractTitle: batch.contractTitle,
+        userId: userId,
+        userRole: userRole,
+        userName: userName
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Invoice download notification sent successfully",
+    });
+  } catch (error) {
+    console.error("Error in notifyInvoiceDownload:", error);
+    res.status(500).json({
+      success: false,
+      message: "Error sending invoice download notification",
+      error: error.message,
+    });
+  }
+};
+
 module.exports = {
   createBatch,
   getAllBatches,
@@ -784,4 +881,6 @@ module.exports = {
   downloadInvoice,
   updatePaymentInfo,
   updateMilestoneStatus,
+  trackInvoiceDownload,
+  notifyInvoiceDownload,
 };

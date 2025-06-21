@@ -68,25 +68,39 @@ const Invoice = ({ batch }) => {
 
       pdf.save(`invoice-${batch.contractId}-${new Date().toISOString().split('T')[0]}.pdf`);
 
-      // Only update invoice status and notify admin when contractor downloads
-      if (isAdmin) {
-        // Track invoice download
+      // Track invoice download for all users
+      try {
         await fetch(`${import.meta.env.VITE_API_URL}/${import.meta.env.VITE_API_VERSION}/batches/${batch._id}/track-invoice-download`, {
           method: 'PATCH',
           headers: {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${localStorage.getItem('token')}`
-          }
+          },
+          body: JSON.stringify({
+            userId: user?.id,
+            userRole: user?.role?.toLowerCase()
+          })
         });
+      } catch (error) {
+        console.error('Error tracking invoice download:', error);
+      }
 
-        // Send notification to admin about invoice download
+      // Send notification about invoice download
+      try {
         await fetch(`${import.meta.env.VITE_API_URL}/${import.meta.env.VITE_API_VERSION}/batches/${batch._id}/notify-invoice-download`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${localStorage.getItem('token')}`
-          }
+          },
+          body: JSON.stringify({
+            userId: user?.id,
+            userRole: user?.role?.toLowerCase(),
+            userName: user?.name
+          })
         });
+      } catch (error) {
+        console.error('Error sending invoice download notification:', error);
       }
 
       toast.success('Invoice downloaded successfully',{autoClose: 1000});
