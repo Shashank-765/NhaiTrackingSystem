@@ -63,7 +63,7 @@ const Tracker = () => {
       },
       {
         heading: `Agency: ${batch.agencyName}`,
-        description: `Agency to Admin Payment Status: ${batch.agencyToNhaiPaymentStatus || 'N/A'}${
+        description: `Agency to Admin Payment Status: ${batch.agencyToNhaiPaymentStatus || 'pending'}${
           batch.agencyToNhaiTransactionId ? '\nTransaction ID: ' + batch.agencyToNhaiTransactionId : ''
         }${
           batch.agencyToNhaiTransactionDate ? '\nDate: ' + new Date(batch.agencyToNhaiTransactionDate).toLocaleDateString() : ''
@@ -115,12 +115,14 @@ const Tracker = () => {
           baseSteps.push({
             heading: `Payment for Milestone ${index + 1}`,
             description: `
-              Status: ${milestone.nhaiToContractorPaymentStatus || 'N/A'}
-              ${milestone.nhaiToContractorTransactionId ? `Transaction ID: ${milestone.nhaiToContractorTransactionId}` : ''}
-              ${milestone.nhaiToContractorTransactionDate ? `Date: ${new Date(milestone.nhaiToContractorTransactionDate).toLocaleDateString()}` : ''}
+              Amount: ₹${milestone.amount}
+              Status: ${milestone.nhaiToContractor?.[0]?.nhaiToContractorPaymentStatus || 'pending'}
+              ${milestone.nhaiToContractor?.[0]?.nhaiToContractorTransactionId ? `Transaction ID: ${milestone.nhaiToContractor[0].nhaiToContractorTransactionId}` : ''}
+              ${milestone.nhaiToContractor?.[0]?.nhaiToContractorTransactionDate ? `Date: ${new Date(milestone.nhaiToContractor[0].nhaiToContractorTransactionDate).toLocaleDateString()}` : ''}
             `,
             visibleTo: ['admin'],
-            milestoneRef: milestone
+            milestoneRef: milestone,
+            isPaymentStep: true
           });
         });
       });
@@ -171,23 +173,68 @@ const Tracker = () => {
         baseSteps.push({
           heading: `Payment for Milestone ${index + 1}`,
           description: `
-            Status: ${milestone.nhaiToContractorPaymentStatus || 'N/A'}
-            ${milestone.nhaiToContractorTransactionId ? `Transaction ID: ${milestone.nhaiToContractorTransactionId}` : ''}
-            ${milestone.nhaiToContractorTransactionDate ? `Date: ${new Date(milestone.nhaiToContractorTransactionDate).toLocaleDateString()}` : ''}
+            Status: ${milestone.nhaiToContractor?.[0]?.nhaiToContractorPaymentStatus || 'pending'}
+          
           `,
           visibleTo: ['Contractor'],
-          milestoneRef: milestone
+          milestoneRef: milestone,
+          isPaymentStep: true
         });
       });
     } else {
-      // For other roles (Agency), show only their relevant info
+      // For Agency role, show milestones for this contract
       if (userRole === 'Agency') {
-        // Agency only sees their payment status
+        // Agency sees all milestones for this contract
+        const agencyMilestones = batch.milestones || [];
+
+        console.log('Agency milestones:', {
+          totalMilestones: batch.milestones?.length,
+          agencyMilestones: agencyMilestones.length,
+          milestones: agencyMilestones.map(m => ({ heading: m.heading, contractorName: m.contractorName }))
+        });
+
+        // Add agency summary
         baseSteps.push({
-          heading: 'Agency Payment',
-          description: `Status: ${batch.agencyToNhaiPaymentStatus || 'N/A'}`,
+          heading: `Agency Contract Summary`,
+          description: `
+            Contract: ${batch.contractTitle}
+            Total Milestones: ${agencyMilestones.length}
+            Total Amount: ₹${agencyMilestones.reduce((sum, m) => sum + (m.bidAmount || 0), 0)}
+          `,
           visibleTo: ['Agency'],
-          milestoneRef: batch
+          milestoneRef: agencyMilestones[0]
+        });
+
+        agencyMilestones.forEach((milestone, index) => {
+          // Add milestone
+          baseSteps.push({
+            heading: `Milestone ${index + 1}`,
+            description: `
+              Heading: ${milestone.heading}
+              Contractor: ${milestone.contractorName}
+              Bid Amount: ₹${milestone.bidAmount}
+              Start Date: ${new Date(milestone.startDate).toLocaleDateString()}
+              End Date: ${new Date(milestone.endDate).toLocaleDateString()}
+              Status: ${milestone.status}
+              Work Status: ${milestone.workStatus || 'pending'}
+              Work Approved: ${milestone.workApproved ? 'Yes' : 'No'}
+            `,
+            visibleTo: ['Agency'],
+            milestoneRef: milestone
+          });
+
+          // Add payment info for this milestone
+          baseSteps.push({
+            heading: `Payment for Milestone ${index + 1}`,
+            description: `
+              Status: ${milestone.agencytoNhai?.[0]?.agencytoNhaiPaymentStatus || 'pending'}
+              ${milestone.agencytoNhai?.[0]?.agencytoNhaiTransactionId ? `Transaction ID: ${milestone.agencytoNhai[0].agencytoNhaiTransactionId}` : ''}
+              ${milestone.agencytoNhai?.[0]?.agencytoNhaiTransactionDate ? `Date: ${new Date(milestone.agencytoNhai[0].agencytoNhaiTransactionDate).toLocaleDateString()}` : ''}
+            `,
+            visibleTo: ['Agency'],
+            milestoneRef: milestone,
+            isPaymentStep: true
+          });
         });
       }
     }
@@ -223,7 +270,7 @@ const Tracker = () => {
 
       // Check if any payments are completed
       const hasCompletedPayments = batch.milestones?.some(milestone => 
-        milestone.nhaiToContractorPaymentStatus === 'completed'
+        milestone.nhaiToContractor?.[0]?.nhaiToContractorPaymentStatus === 'completed'
       );
       if (hasCompletedPayments) {
         currentStep = 4;
@@ -243,15 +290,27 @@ const Tracker = () => {
       }
 
       const hasCompletedPayment = contractorMilestones.some(milestone => 
-        milestone.nhaiToContractorPaymentStatus === 'completed'
+        milestone.nhaiToContractor?.[0]?.nhaiToContractorPaymentStatus === 'completed'
       );
       if (hasCompletedPayment) {
         currentStep = 4;
       }
     } else if (userRole === 'Agency') {
-      // For agency, check if their payment is completed
-      if (batch.agencyToNhaiPaymentStatus === 'completed') {
-        currentStep = 2;
+      // For agency, check their milestones
+      const agencyMilestones = batch.milestones || [];
+
+      const hasCompletedWork = agencyMilestones.some(milestone => 
+        milestone.workStatus === 'completed' && milestone.workApproved
+      );
+      if (hasCompletedWork) {
+        currentStep = 3;
+      }
+
+      const hasCompletedPayment = agencyMilestones.some(milestone => 
+        milestone.agencytoNhai?.[0]?.agencytoNhaiPaymentStatus === 'completed'
+      );
+      if (hasCompletedPayment) {
+        currentStep = 4;
       }
     }
 
@@ -279,7 +338,7 @@ const Tracker = () => {
       const step = steps[stepIndex];
       if (step && step.milestoneRef) {
         if (step.isPaymentStep) {
-          const isCompleted = step.milestoneRef.nhaiToContractorPaymentStatus === 'completed';
+          const isCompleted = step.milestoneRef.nhaiToContractor?.[0]?.nhaiToContractorPaymentStatus === 'completed';
           return { isCompleted, isActive: false };
         } else {
           const isCompleted = step.milestoneRef.workStatus === 'completed' && step.milestoneRef.workApproved;
@@ -307,7 +366,7 @@ const Tracker = () => {
           
           if (isPaymentStep) {
             // Payment step
-            const isCompleted = milestone.nhaiToContractorPaymentStatus === 'completed';
+            const isCompleted = milestone.nhaiToContractor?.[0]?.nhaiToContractorPaymentStatus === 'completed';
             return { isCompleted, isActive: false };
           } else {
             // Work step
@@ -317,9 +376,32 @@ const Tracker = () => {
         }
       }
     } else if (userRole === 'Agency') {
-      // For agency, check if their payment is completed
-      if (batch.agencyToNhaiPaymentStatus === 'completed') {
-        return { isCompleted: true, isActive: false };
+      // For agency, check their milestones
+      const agencyMilestones = batch.milestones || [];
+
+      // Step 2 is agency summary (always completed if we have milestones)
+      if (stepIndex === 2) {
+        return { isCompleted: agencyMilestones.length > 0, isActive: false };
+      }
+
+      // Agency milestones start from step 3 (after admin, agency payment, and summary)
+      if (stepIndex >= 3) {
+        const milestoneIndex = Math.floor((stepIndex - 3) / 2); // Every 2 steps = 1 milestone
+        const isPaymentStep = (stepIndex - 3) % 2 === 1; // Odd steps are payment steps
+        
+        if (milestoneIndex < agencyMilestones.length) {
+          const milestone = agencyMilestones[milestoneIndex];
+          
+          if (isPaymentStep) {
+            // Payment step
+            const isCompleted = milestone.agencytoNhai?.[0]?.agencytoNhaiPaymentStatus === 'completed';
+            return { isCompleted, isActive: false };
+          } else {
+            // Work step
+            const isCompleted = milestone.workStatus === 'completed' && milestone.workApproved;
+            return { isCompleted, isActive: false };
+          }
+        }
       }
     }
 

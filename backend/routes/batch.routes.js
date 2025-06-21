@@ -60,8 +60,6 @@ router.patch('/:id/work-details', protect, updateWorkDetails);
 // Approve work on a batch (protected route)
 router.patch('/:id/approve-work', protect, isAdmin, approveWork);
 
-// Update payment information (admin only, with media upload)
-// router.patch('/:id/payment', protect, isAdmin, upload.single('media'), updatePaymentInfo);
 router.patch('/:id/payment', protect, upload.single('media'), updatePaymentInfo);
 
 // Invoice download - handles tracking, notification, and permission

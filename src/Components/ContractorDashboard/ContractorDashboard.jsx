@@ -102,6 +102,39 @@ const ContractorDashboard = () => {
 
   const handleWorkStatusUpdate = async (batchId, milestoneIndex, newStatus) => {
     try {
+      // Find the original milestone index from the batch
+      const batch = batches.find(b => b._id === batchId);
+      if (!batch) {
+        toast.error("Batch not found");
+        return;
+      }
+
+      const contractorMilestones = batch.milestones?.filter(m => m.contractorId === user.id) || [];
+      const selectedMilestone = contractorMilestones[milestoneIndex];
+      
+      if (!selectedMilestone) {
+        toast.error("Milestone not found");
+        return;
+      }
+
+      // Find the original index in the batch.milestones array
+      const originalMilestoneIndex = batch.milestones.findIndex(m => 
+        m._id === selectedMilestone._id
+      );
+
+      if (originalMilestoneIndex === -1) {
+        toast.error("Could not find original milestone index");
+        return;
+      }
+
+      console.log('Updating work status:', {
+        batchId,
+        filteredIndex: milestoneIndex,
+        originalIndex: originalMilestoneIndex,
+        milestoneHeading: selectedMilestone.heading,
+        newStatus
+      });
+
       const response = await fetch(
         `${import.meta.env.VITE_API_URL}/${
           import.meta.env.VITE_API_VERSION
@@ -113,7 +146,7 @@ const ContractorDashboard = () => {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
           },
           body: JSON.stringify({
-            milestoneIndex,
+            milestoneIndex: originalMilestoneIndex,
             workStatus: newStatus
           }),
         }
@@ -128,6 +161,7 @@ const ContractorDashboard = () => {
         toast.error(data.message || "Error updating work status");
       }
     } catch (error) {
+      console.error('Error updating work status:', error);
       toast.error("Server error. Please try again later.");
     }
   };
@@ -225,8 +259,8 @@ const ContractorDashboard = () => {
                           alt="invoice"
                           className="invoice-icon"
                           style={{
-                            opacity: selectedMilestone.nhaiToContractorPaymentStatus === "completed" ? 1 : 0.7,
-                            cursor: selectedMilestone.nhaiToContractorPaymentStatus === "completed"
+                            opacity: selectedMilestone.workStatus === "completed" ? 1 : 0.7,
+                            cursor: selectedMilestone.workStatus === "completed"
                               ? "pointer"
                               : "not-allowed",
                           }}

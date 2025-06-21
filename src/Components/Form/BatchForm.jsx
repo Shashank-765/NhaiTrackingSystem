@@ -26,7 +26,7 @@ const BatchForm = ({ handleCloseBatchForm }) => {
     try {
       console.log('Fetching users...');
       const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/${import.meta.env.VITE_API_VERSION}/users`,
+        `${import.meta.env.VITE_API_URL}/${import.meta.env.VITE_API_VERSION}/users/all`,
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -72,7 +72,9 @@ const BatchForm = ({ handleCloseBatchForm }) => {
           heading: '',
           status: 'pending',
           startDate: '',
-          endDate: ''
+          endDate: '',
+          bidAmount: '',
+          bidDuration: ''
         };
       }
       updatedMilestones[index] = {
@@ -97,7 +99,9 @@ const BatchForm = ({ handleCloseBatchForm }) => {
       heading: "",
       status: "pending",
       startDate: "",
-      endDate: ""
+      endDate: "",
+      bidAmount: "",
+      bidDuration: ""
     }));
     
     setFormData(prev => ({
@@ -126,7 +130,7 @@ const BatchForm = ({ handleCloseBatchForm }) => {
       // Validate milestones
       if (formData.milestones.length > 0) {
         for (const milestone of formData.milestones) {
-          if (!milestone.heading || !milestone.contractorId || !milestone.amount || !milestone.startDate || !milestone.endDate) {
+          if (!milestone.heading || !milestone.contractorId || !milestone.amount || !milestone.startDate || !milestone.endDate || !milestone.bidAmount) {
             toast.error('Please fill all required fields in milestones');
             return;
           }
@@ -156,17 +160,17 @@ const BatchForm = ({ handleCloseBatchForm }) => {
       const batchData = {
         contractTitle: formData.title,
         contractId: formData.contractId,
-        bidValue: parseFloat(formData.ContractBid),
-        contractorValue: parseFloat(formData.ContractorAmount),
-        bidDuration: formData.ContractDuration,
         agencyId: selectedAgency._id,
         agencyName: selectedAgency.name,
         status: formData.status,
         milestones: formData.milestones.map(milestone => ({
           heading: milestone.heading,
+          contractorValue: parseFloat(formData.ContractorAmount),
           contractorId: milestone.contractorId,
           contractorName: milestone.contractorName,
           amount: parseFloat(milestone.amount),
+          bidAmount: parseFloat(milestone.bidAmount),
+          bidDuration: milestone.bidDuration,
           startDate: milestone.startDate,
           endDate: milestone.endDate,
           status: milestone.status
@@ -353,14 +357,6 @@ const BatchForm = ({ handleCloseBatchForm }) => {
           onChange={handleChange}
           required
         />
-        <input
-          type="number"
-          name="ContractBid"
-          placeholder="Contract Bid"
-          value={formData.ContractBid}
-          onChange={handleChange}
-          required
-        />
         {isLoading ? (
           <div>Loading users...</div>
         ) : (
@@ -464,24 +460,22 @@ const BatchForm = ({ handleCloseBatchForm }) => {
                         ))}
                       </select>
                     </div>
-
-                     <div className="form-group">
-                      <label>bid duration:</label>
+                    <div className="form-group">
+                      <label>Bid Amount:</label>
                       <input
                         type="number"
-                        value={milestone.amount}
-                        onChange={(e) => handleMilestoneChange(index, 'amount', e.target.value)}
-                        placeholder="Enter bid duration provided by agency"
+                        value={milestone.bidAmount}
+                        onChange={(e) => handleMilestoneChange(index, 'bidAmount', e.target.value)}
+                        placeholder="Enter bid amount"
                       />
                     </div>
-                    
-                     <div className="form-group">
-                      <label>bid amount:</label>
+                    <div className="form-group">
+                      <label>Bid Duration:</label>
                       <input
-                        type="number"
-                        value={milestone.amount}
-                        onChange={(e) => handleMilestoneChange(index, 'amount', e.target.value)}
-                        placeholder="Enter bid amount"
+                        type="text"
+                        value={milestone.bidDuration}
+                        onChange={(e) => handleMilestoneChange(index, 'bidDuration', e.target.value)}
+                        placeholder="Enter bid duration"
                       />
                     </div>
                     <div className="form-group">
@@ -493,7 +487,6 @@ const BatchForm = ({ handleCloseBatchForm }) => {
                         placeholder="Enter milestone amount for contractor"
                       />
                     </div>
-                    
                     <div className="form-group">
                       <label>Start Date:</label>
                       <input

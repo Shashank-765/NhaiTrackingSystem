@@ -89,8 +89,16 @@ const [userTotalPages, setUserTotalPages] = useState(1);
     const selectedMilestone = batch.milestones[selectedMilestoneIndex];
     if (!selectedMilestone) return;
 
+    console.log('Payment status check:', {
+      batchId,
+      selectedMilestoneIndex,
+      paymentStatus: selectedMilestone.nhaiToContractor?.[0]?.nhaiToContractorPaymentStatus,
+      workStatus: selectedMilestone.workStatus,
+      workApproved: selectedMilestone.workApproved
+    });
+
     // Prevent duplicate payment - check the specific milestone's payment status
-    if (selectedMilestone.nhaiToContractorPaymentStatus?.toLowerCase() === 'completed') {
+    if (selectedMilestone.nhaiToContractor?.[0]?.nhaiToContractorPaymentStatus?.toLowerCase() === 'completed') {
       toast.warning('Payment is already done for this milestone', {
         autoClose: 1000,
       });
@@ -377,7 +385,7 @@ const [userTotalPages, setUserTotalPages] = useState(1);
     
     if (selectedMilestone?.workApproved && 
         selectedMilestone?.workStatus === "completed" && 
-        batch.agencyToNhaiPaymentStatus.toLowerCase() === 'completed') {
+        selectedMilestone?.agencytoNhai?.[0]?.agencytoNhaiPaymentStatus === 'completed') {
       setSelectedInvoice(batch);
     } else {
       toast.warning(
@@ -449,15 +457,17 @@ const [userTotalPages, setUserTotalPages] = useState(1);
                 <th>Agency Name</th>
                 <th>Contractor Name</th>
                 <th>Bid Amount</th>
+                <th>Bid Duration</th>
                 <th>Contractor Amount</th>
                 <th>Start Date</th>
                 <th>End Date</th>
                 <th>Status</th>
                 <th>Approval</th>
-                <th>Invoice</th>
                 <th>Pay to Contractor</th>
-                <th>Info</th>
                 <th>Milestone</th>
+                <th>Invoice</th>
+                <th>Info</th>
+
               </tr>
             </thead>
             <tbody>
@@ -476,13 +486,16 @@ const [userTotalPages, setUserTotalPages] = useState(1);
               ) : (
                 filteredBatches.map((batch) => {
                   const selectedMilestone = batch.milestones?.[selectedMilestoneIndices[batch._id] || 0] || {};
+                  const nhaiToContractorStatus = selectedMilestone.nhaiToContractor?.[0]?.nhaiToContractorPaymentStatus || "pending";
+                  const agencyToNhaiStatus = selectedMilestone.agencytoNhai?.[0]?.agencytoNhaiPaymentStatus || "pending";
                   return (
                     <tr key={batch._id} className="batch-table-row">
                       <td>{batch.contractId}</td>
                       <td>{batch.contractTitle}</td>
                       <td>{batch.agencyName}</td>
                       <td>{batch.milestones?.[selectedMilestoneIndices[batch._id] || 0]?.contractorName || batch.contractorName}</td>
-                      <td>₹{batch.bidValue}</td>
+                      <td>{selectedMilestone.bidAmount}</td>
+                      <td>{selectedMilestone.bidDuration}</td>
                       <td>₹{batch.milestones?.[selectedMilestoneIndices[batch._id] || 0]?.amount || batch.contractorValue || "N/A"}</td>
                       <td>{batch.milestones?.[selectedMilestoneIndices[batch._id] || 0]?.startDate?.split('T')[0] || "N/A"}</td>
                       <td>{batch.milestones?.[selectedMilestoneIndices[batch._id] || 0]?.endDate?.split('T')[0] || "N/A"}</td>
@@ -534,56 +547,31 @@ const [userTotalPages, setUserTotalPages] = useState(1);
                         />
                       </td>
                       <td>
-                        <img
-                          src={invoice}
-                          alt="invoice"
-                          className="invoice-icon"
-                          style={{
-                            opacity: batch.agencyToNhaiPaymentStatus.toLowerCase() === 'completed' ? 1 : 0.7,
-                            cursor: batch.agencyToNhaiPaymentStatus.toLowerCase() === 'completed'
-                              ? "pointer"
-                              : "not-allowed",
-                          }}
-                          onClick={() => handleInvoiceClick(batch)}
-                        />
-                      </td>
-                      <td>
                         <button
                           type="button"
                           className="payinfo-button"
                           disabled={
-                            batch.agencyToNhaiPaymentStatus.toLowerCase() === 'pending' ||
-                            batch.milestones?.[selectedMilestoneIndices[batch._id] || 0]?.nhaiToContractorPaymentStatus?.toLowerCase() === 'completed'
+                            batch.milestones?.[selectedMilestoneIndices[batch._id] || 0]?.nhaiToContractor?.[0]?.nhaiToContractorPaymentStatus === 'completed'
                           }
                           style={{
                             cursor: 
-                              batch.agencyToNhaiPaymentStatus.toLowerCase() === 'pending' ||
-                              batch.milestones?.[selectedMilestoneIndices[batch._id] || 0]?.nhaiToContractorPaymentStatus?.toLowerCase() === 'completed'
+                              batch.milestones?.[selectedMilestoneIndices[batch._id] || 0]?.nhaiToContractor?.[0]?.nhaiToContractorPaymentStatus === 'completed'
                                 ? 'not-allowed'
                                 : 'pointer',
                             opacity: 
-                              batch.agencyToNhaiPaymentStatus.toLowerCase() === 'pending' ||
-                              batch.milestones?.[selectedMilestoneIndices[batch._id] || 0]?.nhaiToContractorPaymentStatus?.toLowerCase() === 'completed'
+                              batch.milestones?.[selectedMilestoneIndices[batch._id] || 0]?.nhaiToContractor?.[0]?.nhaiToContractorPaymentStatus === 'completed'
                                 ? 0.6
                                 : 1
                           }}
                           onClick={() => handlePayInfoForm(batch._id)}
                         >
-                          {batch.milestones?.[selectedMilestoneIndices[batch._id] || 0]?.nhaiToContractorPaymentStatus?.toLowerCase() === 'completed' 
+                          {batch.milestones?.[selectedMilestoneIndices[batch._id] || 0]?.nhaiToContractor?.[0]?.nhaiToContractorPaymentStatus === 'completed' 
                             ? 'Payment Completed' 
                             : 'Pay to Contractor'
                           }
                         </button>
                       </td>
-                      <td>
-                        <img
-                          src={infoBatchAdmin}
-                          alt=""
-                          className="info-icon"
-                          onClick={() => handleInfoClick(batch._id)}
-                        />
-                      </td>
-                      <td>
+                         <td>
                         <div className="milestone-dropdown">
                           <select 
                             className="milestone-select"
@@ -597,6 +585,28 @@ const [userTotalPages, setUserTotalPages] = useState(1);
                             ))}
                           </select>
                         </div>
+                      </td>
+                         <td>
+                        <img
+                          src={invoice}
+                          alt="invoice"
+                          className="invoice-icon"
+                          style={{
+                            opacity: selectedMilestone?.agencytoNhai?.[0]?.agencytoNhaiPaymentStatus === 'completed' ? 1 : 0.7,
+                            cursor: selectedMilestone?.agencytoNhai?.[0]?.agencytoNhaiPaymentStatus === 'completed'
+                              ? "pointer"
+                              : "not-allowed",
+                          }}
+                          onClick={() => handleInvoiceClick(batch)}
+                        />
+                      </td>
+                          <td>
+                        <img
+                          src={infoBatchAdmin}
+                          alt=""
+                          className="info-icon"
+                          onClick={() => handleInfoClick(batch._id)}
+                        />
                       </td>
                     </tr>
                   );

@@ -11,6 +11,11 @@ const Invoice = ({ batch }) => {
   const isAdmin = user?.role?.toLowerCase() === 'admin';
   const isContractor = user?.role?.toLowerCase() === 'contractor';
   
+  // Calculate total bid value from milestones
+  const totalBidValue = batch.milestones?.reduce((total, milestone) => {
+    return total + (milestone.amount || 0);
+  }, 0) || 0;
+  
   const downloadInvoice = async () => {
     // Check if any milestone has completed and approved work
     const hasCompletedApprovedWork = batch.milestones?.some(milestone => 
@@ -140,7 +145,7 @@ const Invoice = ({ batch }) => {
         </div>
         {user?.role !== 'Contractor' && (
           <div style={styles.detailItem}>
-            <strong style={styles.bold}>Bid Value:</strong> ₹{batch.bidValue.toLocaleString()}
+            <strong style={styles.bold}>Bid Value:</strong> ₹{totalBidValue.toLocaleString()}
           </div>
         )}
       </div>

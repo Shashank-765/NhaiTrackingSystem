@@ -13,6 +13,7 @@ const AgencyDashboard = () => {
   const [batches, setBatches] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
+  const [selectedMilestoneIndices, setSelectedMilestoneIndices] = useState({});
   const { user } = useAuth();
   const [confirmDialog, setConfirmDialog] = useState({
       isOpen: false,
@@ -35,30 +36,20 @@ const AgencyDashboard = () => {
     navigate(`/tracker/${batchId}`);
   };
 
-  const handlePayInfoForm = (batchId) => {
+  const handlePayInfoForm = (batchId, milestoneIndex) => {
     const batch = batches.find((batch) => batch._id === batchId);
+    if (!batch) return;
+
+    const milestone = batch.milestones[milestoneIndex];
+    if (!milestone) return;
+
+    // Check if payment is already completed
+    if (milestone.agencytoNhai?.[0]?.agencytoNhaiPaymentStatus === "completed") {
+      toast.warning('Payment is already done for this milestone');
+      return;
+    }
     
-    // Check if payment is already done
-    if(batch.agencyToNhaiPaymentStatus.toLowerCase() === 'completed'){
-      toast.warning('Payment is already done', {
-        autoClose: 1000,
-      });
-      return;
-    }
-
-    // Check if any milestone is completed
-    const hasCompletedMilestone = batch.milestones?.some(
-      milestone => milestone.workStatus?.toLowerCase() === 'completed'
-    );
-
-    if (!hasCompletedMilestone) {
-      toast.warning('At least one milestone must be completed before payment', {
-        autoClose: 2000,
-      });
-      return;
-    }
-
-    setPayInfoForm({ isOpen: !payInfoForm.isOpen, batchId });
+    setPayInfoForm({ isOpen: true, batchId, selectedMilestoneIndex: milestoneIndex });
   };
 
   const fetchBatches = async () => {
@@ -207,11 +198,13 @@ const AgencyDashboard = () => {
               <tr>
                 <th>ContractId</th>
                 <th>Title</th>
-                {/* <th>Contractor Name</th> */}
+                <th>Contractor Name</th>
                 <th>Bid Amount</th>
+                <th>Bid Duration</th>
                 <th>Status</th>
                 <th>Pay to NHAI</th>
                 <th>Info</th>
+                <th>Milestone</th>
               </tr>
             </thead>
             <tbody>
@@ -228,57 +221,84 @@ const AgencyDashboard = () => {
                   </td>
                 </tr>
               ) : (
-                filteredBatches.map((batch) => (
-                  <tr key={batch._id}>
-                    <td>{batch.contractId}</td>
-                    <td>{batch.contractTitle}</td>
-                    {/* <td>{batch.contractorName}</td> */}
-                    <td>₹{batch.bidValue}</td>
-                    <td>
-                      {/* <button
-                        type="button"
-                        className="edit-btn"
-                        style={{
-                          opacity: batch.status === "approved" ? 0.7 : 1,
-                          cursor:
-                            batch.status === "approved"
-                              ? "not-allowed"
-                              : "pointer",
-                        }}
-                      >
-                        {batch.status === "pending" ? "Pending" : "Approved"}
-                      </button> */}
-                      <button
-                        className={`status-btn ${batch.status.toLowerCase()}`}
-                        onClick={() =>
-                          initiateStatusUpdate(batch._id, batch.status)
-                        }
-                        // disabled={batch.status.toLowerCase() !== "pending"}
-                      >
-                        {batch.status === "pending" ? "Pending" : "Approved"}
-                      </button>
-                    </td>
-                    <td>
-                      <button 
-                        type="button" 
-                        className="payinfo-button" 
-                        disabled={!batch.milestones?.some(m => m.workStatus?.toLowerCase() === 'completed')} 
-                        onClick={() => handlePayInfoForm(batch._id)}
-                      >
-                        Pay to NHAI
-                      </button>
-                    </td>
-                    <td>
-                      <img
-                        src={infoIcon}
-                        alt="Info"
-                        className="info-icon"
-                        onClick={() => handleInfoClick(batch._id)}
-                        style={{ cursor: "pointer" }}
-                      />
-                    </td>
-                  </tr>
-                ))
+                filteredBatches.map((batch) => {
+                  const selectedMilestone = batch.milestones[selectedMilestoneIndices[batch._id] || 0];
+                  const canPay = selectedMilestone?.agencytoNhai?.[0]?.agencytoNhaiPaymentStatus !== "completed";
+                  return (
+                    <tr key={batch._id}>
+                      <td>{batch.contractId}</td>
+                      <td>{batch.contractTitle}</td>
+                      <td>{selectedMilestone?.contractorName}</td>
+                      <td>{selectedMilestone?.bidDuration}</td>
+                      <td>₹{selectedMilestone?.bidAmount}</td>
+                      <td>
+                        {/* <button
+                          type="button"
+                          className="edit-btn"
+                          style={{
+                            opacity: batch.status === "approved" ? 0.7 : 1,
+                            cursor:
+                              batch.status === "approved"
+                                ? "not-allowed"
+                                : "pointer",
+                          }}
+                        >
+                          {batch.status === "pending" ? "Pending" : "Approved"}
+                        </button> */}
+                        <button
+                          className={`status-btn ${batch.status.toLowerCase()}`}
+                          onClick={() =>
+                            initiateStatusUpdate(batch._id, batch.status)
+                          }
+                          // disabled={batch.status.toLowerCase() !== "pending"}
+                        >
+                          {batch.status === "pending" ? "Pending" : "Approved"}
+                        </button>
+                      </td>
+                      <td>
+                        <button
+                          type="button"
+                          className="payinfo-button"
+                          disabled={!canPay}
+                          onClick={() => handlePayInfoForm(batch._id, selectedMilestoneIndices[batch._id] || 0)}
+                        >
+                          {selectedMilestone?.agencytoNhai?.[0]?.agencytoNhaiPaymentStatus === "completed"
+                            ? "Payment Completed"
+                            : "Pay to NHAI"}
+                        </button>
+                      </td>
+                      <td>
+                        <img
+                          src={infoIcon}
+                          alt="Info"
+                          className="info-icon"
+                          onClick={() => handleInfoClick(batch._id)}
+                          style={{ cursor: "pointer" }}
+                        />
+                      </td>
+                      <td>
+                        <div className="milestone-dropdown">
+                          <select
+                            className="milestone-select"
+                            value={selectedMilestoneIndices[batch._id] || 0}
+                            onChange={e =>
+                              setSelectedMilestoneIndices({
+                                ...selectedMilestoneIndices,
+                                [batch._id]: Number(e.target.value)
+                              })
+                            }
+                          >
+                            {batch.milestones.map((m, idx) => (
+                              <option key={idx} value={idx}>
+                                Milestone {idx + 1}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })
               )}
             </tbody>
           </table>
@@ -291,7 +311,8 @@ const AgencyDashboard = () => {
       {payInfoForm.isOpen && 
       <PayInfoForm
         batchId={payInfoForm.batchId}
-        onClose={() => setPayInfoForm({ isOpen: false, batchId: null })}
+        selectedMilestoneIndex={payInfoForm.selectedMilestoneIndex}
+        onClose={() => setPayInfoForm({ isOpen: false, batchId: null, selectedMilestoneIndex: null })}
         onSuccess={refreshBatchInfo}
       />}
      

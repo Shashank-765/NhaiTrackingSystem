@@ -95,3 +95,23 @@ exports.getUsers = async (req, res) => {
         });
     }
 };
+
+exports.getAllUsers = async (req, res) => {
+    try {
+        const users = await User.find()
+            .select('-password')
+            .sort({ name: 1 }); // Sort by name alphabetically
+
+        res.json({
+            success: true,
+            data: users
+        });
+
+    } catch (error) {
+        console.error('Get all users error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error fetching users'
+        });
+    }
+};

@@ -1,5 +1,4 @@
 const mongoose = require("mongoose");
-
 const batchSchema = new mongoose.Schema(
   {
     contractTitle: {
@@ -103,23 +102,29 @@ const batchSchema = new mongoose.Schema(
         completedAt: {
           type: Date
         },
-        nhaiToContactor: [
+        nhaiToContractor: [
           {
-            nhaiToContactorTransactionId: {
+            nhaiToContractorTransactionId: {
               type: String,
-              default: "",
+              required: [true, "Transaction ID is required"]
             },
-            nhaiToContactorTransactionDate: {
-              type: Date
+            nhaiToContractorTransactionDate: {
+              type: Date,
+              required: [true, "Transaction date is required"],
+              default: Date.now
             },
-            nhaiToContactorPaymentMedia: {
+            nhaiToContractorPaymentMedia:{
               type: String,
-              default: ""
+              required: [true, "Payment media is required"]
             },
-            nhaiToContactorPaymentStatus: {
+            nhaiToContractorPaymentStatus:{
               type: String,
               enum: ["pending", "completed"],
               default: "pending"
+            },
+            createdAt: {
+              type: Date,
+              default: Date.now
             }
           }
         ],
@@ -127,19 +132,29 @@ const batchSchema = new mongoose.Schema(
           {
             agencytoNhaiTransactionId: {
               type: String,
-              default: "",
+              required: [true, "Transaction ID is required"]
             },
             agencytoNhaiTransactionDate: {
-              type: Date
+              type: Date,
+              required: [true, "Transaction date is required"],
+              default: Date.now
             },
             agencytoNhaiPaymentMedia: {
               type: String,
-              default: ""
+              required: [true, "Payment media is required"]
+            },
+            agencytoNhaiAmount: {
+              type: Number,
+              min: [0, "Amount cannot be negative"]
             },
             agencytoNhaiPaymentStatus: {
               type: String,
               enum: ["pending", "completed"],
               default: "pending"
+            },
+            createdAt: {
+              type: Date,
+              default: Date.now
             }
           }
         ]
@@ -151,7 +166,6 @@ const batchSchema = new mongoose.Schema(
   }
 );
 
-// Add a pre-save middleware to validate milestone dates
 batchSchema.pre('save', function (next) {
   if (this.milestones && this.milestones.length > 0) {
     for (let i = 0; i < this.milestones.length; i++) {
@@ -168,4 +182,3 @@ batchSchema.pre('save', function (next) {
 });
 
 module.exports = mongoose.model("Batch", batchSchema);
-

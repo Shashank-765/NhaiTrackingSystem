@@ -9,6 +9,7 @@ const PayInfoForm = ({ batchId, selectedMilestoneIndex, onClose, onSuccess }) =>
   const [formData, setFormData] = useState({
     transactionId: "",
     transactionDate: new Date().toISOString().split("T")[0],
+    amount: "",
 
     // transactionId of agency to nhai
     agencyToNhaiTransactionId: "",
@@ -23,6 +24,18 @@ const PayInfoForm = ({ batchId, selectedMilestoneIndex, onClose, onSuccess }) =>
   const [mediaFile, setMediaFile] = useState(null);
   const overlayRef = useRef();
   const { user } = useAuth();
+  const selectedMilestone = batch && typeof selectedMilestoneIndex !== "undefined"
+    ? batch.milestones[selectedMilestoneIndex]
+    : undefined;
+
+  const lastAgencyPayment = selectedMilestone?.agencytoNhai?.length
+    ? selectedMilestone.agencytoNhai.at(-1)
+    : null;
+
+  const lastNhaiPayment = selectedMilestone?.nhaiToContractor?.length
+    ? selectedMilestone.nhaiToContractor.at(-1)
+    : null;
+
   useEffect(() => {
     const fetchBatchDetails = async () => {
       try {
@@ -90,6 +103,8 @@ const PayInfoForm = ({ batchId, selectedMilestoneIndex, onClose, onSuccess }) =>
         form.append('transactionId', formData.transactionId);
         form.append('transactionDate', formData.transactionDate);
         form.append('transactionType', 'agency_to_nhai');
+        form.append('milestoneIndex', selectedMilestoneIndex);
+        form.append('amount', selectedMilestone?.bidAmount || 0);
         
         if (mediaFile) {
           form.append('media', mediaFile);
@@ -111,7 +126,6 @@ const PayInfoForm = ({ batchId, selectedMilestoneIndex, onClose, onSuccess }) =>
         }
 
         // Check if the selected milestone is completed and approved
-        const selectedMilestone = batch.milestones[selectedMilestoneIndex];
         if (!selectedMilestone) {
           toast.error('Invalid milestone selected', {
             autoClose: 2000,
@@ -139,7 +153,7 @@ const PayInfoForm = ({ batchId, selectedMilestoneIndex, onClose, onSuccess }) =>
         }
 
         // Check if payment is already made
-        if (selectedMilestone.nhaiToContractorPaymentStatus === "completed") {
+        if (lastNhaiPayment && lastNhaiPayment.nhaiToContractorPaymentStatus === "completed") {
           toast.error('Payment already made for this milestone', {
             autoClose: 2000,
           });
@@ -148,6 +162,7 @@ const PayInfoForm = ({ batchId, selectedMilestoneIndex, onClose, onSuccess }) =>
         
         form.append('transactionId', formData.transactionId);
         form.append('transactionDate', formData.transactionDate);
+        // form.append('amount', formData.amount);
         form.append('transactionType', 'nhai_to_contractor');
         form.append('milestoneIndex', selectedMilestoneIndex);
         
@@ -250,12 +265,78 @@ const PayInfoForm = ({ batchId, selectedMilestoneIndex, onClose, onSuccess }) =>
               type="text"
               value={`₹${
                 user.role.toLowerCase() === 'agency'
-                  ? batch.bidValue.toLocaleString()
+                  ? (selectedMilestone?.bidAmount?.toLocaleString() || "0")
                   : (batch.milestones[selectedMilestoneIndex]?.amount?.toLocaleString() || "0")
               }`}
               disabled
             />
           </div>
+
+          {/* Payment Status Display for Agency */}
+          {user.role.toLowerCase() === "agency" && selectedMilestone && (
+            <div className="form-group">
+              <label>Payment Status</label>
+              <div style={{
+                padding: '8px 12px',
+                borderRadius: '4px',
+                backgroundColor: selectedMilestone.agencytoNhai?.[0]?.agencytoNhaiPaymentStatus === 'completed' 
+                  ? '#d4edda' 
+                  : '#fff3cd',
+                color: selectedMilestone.agencytoNhai?.[0]?.agencytoNhaiPaymentStatus === 'completed' 
+                  ? '#155724' 
+                  : '#856404',
+                border: `1px solid ${
+                  selectedMilestone.agencytoNhai?.[0]?.agencytoNhaiPaymentStatus === 'completed' 
+                    ? '#c3e6cb' 
+                    : '#ffeaa7'
+                }`,
+                fontWeight: 'bold'
+              }}>
+                {selectedMilestone.agencytoNhai?.[0]?.agencytoNhaiPaymentStatus === 'completed' 
+                  ? ' Payment Completed' 
+                  : ' Payment Pending'}
+              </div>
+              {selectedMilestone.agencytoNhai?.[0]?.agencytoNhaiPaymentStatus === 'completed' && (
+                <div style={{ fontSize: '0.9rem', marginTop: '4px', color: '#666' }}>
+                  Transaction ID: {selectedMilestone.agencytoNhai[0].agencytoNhaiTransactionId}<br/>
+                  Date: {new Date(selectedMilestone.agencytoNhai[0].agencytoNhaiTransactionDate).toLocaleDateString()}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Payment Status Display for Admin */}
+          {user.role.toLowerCase() === "admin" && selectedMilestone && (
+            <div className="form-group">
+              <label>Contractor Payment Status</label>
+              <div style={{
+                padding: '8px 12px',
+                borderRadius: '4px',
+                backgroundColor: selectedMilestone.nhaiToContractor?.[0]?.nhaiToContractorPaymentStatus === 'completed' 
+                  ? '#d4edda' 
+                  : '#fff3cd',
+                color: selectedMilestone.nhaiToContractor?.[0]?.nhaiToContractorPaymentStatus === 'completed' 
+                  ? '#155724' 
+                  : '#856404',
+                border: `1px solid ${
+                  selectedMilestone.nhaiToContractor?.[0]?.nhaiToContractorPaymentStatus === 'completed' 
+                    ? '#c3e6cb' 
+                    : '#ffeaa7'
+                }`,
+                fontWeight: 'bold'
+              }}>
+                {selectedMilestone.nhaiToContractor?.[0]?.nhaiToContractorPaymentStatus === 'completed' 
+                  ? '✅ Payment Completed' 
+                  : '⏳ Payment Pending'}
+              </div>
+              {selectedMilestone.nhaiToContractor?.[0]?.nhaiToContractorPaymentStatus === 'completed' && (
+                <div style={{ fontSize: '0.9rem', marginTop: '4px', color: '#666' }}>
+                  Transaction ID: {selectedMilestone.nhaiToContractor[0].nhaiToContractorTransactionId}<br/>
+                  Date: {new Date(selectedMilestone.nhaiToContractor[0].nhaiToContractorTransactionDate).toLocaleDateString()}
+                </div>
+              )}
+            </div>
+          )}
 
           {/* form-group for transaction id and transaction date made by agency to nhai*/}
           {user.role.toLowerCase() === "agency" && (

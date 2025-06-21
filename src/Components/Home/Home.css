@@ -8,7 +8,7 @@ html {
     flex-direction: column;
   }
   .hero-image{
-    width:650px;
+    width:690px;
   }
   .main-content {
     padding: 0;
@@ -87,9 +87,9 @@ html {
   }
   
   .btn.primary {
-    background-color: #fff; /* White for primary button */
-    color: #1e3a8a; /* Dark blue text */
-    border: 1px solid #1e3a8a; /* Dark blue border */
+    background-color: #fff; 
+    color: #1e3a8a;
+    border: 1px solid #1e3a8a; 
   }
   
   .btn.primary:hover {
@@ -1238,6 +1238,9 @@ html {
 .platform-features-section, .use-case-section {
 padding:0px;
 }
+  .hero-image{
+    width:350px;
+  }
 .section-heading {
     font-size: 25px;
     }
@@ -1332,6 +1335,9 @@ padding:0px;
 display:block;
   margin: 10px 0px 10px 0px;
 }
+  .description{
+    font-size:10px;
+  }
 .hero-image{
   width:100%;
   height:100%;

@@ -10,6 +10,23 @@ const ContractorBatchEditForm = ({ batch, handleContractorBatchForm, onRefresh }
     e.preventDefault();
 
     try {
+      // Find the original milestone index using the milestone ID
+      const originalMilestoneIndex = batch.milestones.findIndex(m => 
+        m._id === batch.selectedMilestone._id
+      );
+
+      if (originalMilestoneIndex === -1) {
+        toast.error("Could not find milestone in batch");
+        return;
+      }
+
+      console.log('Updating work status from form:', {
+        batchId: batch._id,
+        originalIndex: originalMilestoneIndex,
+        milestoneHeading: batch.selectedMilestone.heading,
+        workStatus
+      });
+
       const response = await fetch(
         `${import.meta.env.VITE_API_URL}/${
           import.meta.env.VITE_API_VERSION
@@ -21,7 +38,7 @@ const ContractorBatchEditForm = ({ batch, handleContractorBatchForm, onRefresh }
             Authorization: `Bearer ${localStorage.getItem("token")}`,
           },
           body: JSON.stringify({
-            milestoneIndex: batch.selectedMilestoneIndex || batch.milestones.findIndex(m => m.contractorId === batch.selectedMilestone.contractorId),
+            milestoneIndex: originalMilestoneIndex,
             workStatus,
             workDetails
           }),
@@ -38,6 +55,7 @@ const ContractorBatchEditForm = ({ batch, handleContractorBatchForm, onRefresh }
         toast.error(data.message || "Error updating work status");
       }
     } catch (error) {
+      console.error('Error updating work status:', error);
       toast.error("Server error. Please try again later.");
     }
   };
