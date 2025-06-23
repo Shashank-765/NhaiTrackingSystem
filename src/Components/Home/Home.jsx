@@ -1,7 +1,6 @@
 import React, { useState } from 'react'
 import "./Home.css"
 import { motion } from "framer-motion";
-import Invoice from '../Invoice/Invoice';
 import imageBanner from '../../Images/bannerimage.png';
 import secondSectionImage from '../../Images/secondsection.png';
 import { IoIosArrowDown } from "react-icons/io";

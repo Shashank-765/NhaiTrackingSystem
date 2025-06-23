@@ -74,4 +74,6 @@ router.patch('/:id/track-invoice-download', protect, trackInvoiceDownload);
 // Notify invoice download
 router.post('/:id/notify-invoice-download', protect, notifyInvoiceDownload);
 
+router.post('/:id/download-invoice', protect, downloadInvoice);
+
 module.exports = router;

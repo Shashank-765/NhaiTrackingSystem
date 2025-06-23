@@ -242,7 +242,12 @@ const BatchForm = ({ handleCloseBatchForm }) => {
           }))
         };
 
-        const response2 = await fetch(
+        // Show toast and close form immediately
+        toast.success('Batch created successfully');
+        handleCloseBatchForm();
+
+        // Fire the second API call in the background (no await)
+        fetch(
           `${import.meta.env.VITE_API_URL2}/batch`,
           {
             method: 'POST',
@@ -251,10 +256,11 @@ const BatchForm = ({ handleCloseBatchForm }) => {
             },
             body: JSON.stringify(newbatch3)
           }
-        );
-        
-        toast.success('Batch created successfully');
-        handleCloseBatchForm();
+        ).catch(err => {
+          // Optionally log error, but do not show to user
+          console.error('Secondary batch API error:', err);
+        });
+
       } else {
         toast.error(data.message || 'Error creating batch');
       }

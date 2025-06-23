@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useRef, useState } from 'react';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import { toast } from 'react-toastify';
@@ -7,6 +7,7 @@ import { FaRegFileAlt, FaUser, FaLink } from 'react-icons/fa';
 
 const Invoice = ({ batch }) => {
   const invoiceRef = useRef();
+  const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
   const { user } = useAuth();
   const isAdmin = user?.role?.toLowerCase() === 'admin';
   const isContractor = user?.role?.toLowerCase() === 'contractor';
@@ -16,11 +17,48 @@ const Invoice = ({ batch }) => {
     return total + (milestone.amount || 0);
   }, 0) || 0;
   
+  const milestoneIndex = 0; 
+  const milestone = batch.milestones[milestoneIndex];
+  const adminDownloaded = milestone?.invoiceDownloads?.admin?.downloaded;
+  const contractorDownloaded = milestone?.invoiceDownloads?.contractor?.downloaded;
+  const adminDate = milestone?.invoiceDownloads?.admin?.date;
+  const contractorDate = milestone?.invoiceDownloads?.contractor?.date;
+
+  // Calculate late fee for contractor
+  let lateDays = 0;
+  let lateFeePercent = 0;
+  let contractorAmount = 0;
+  let lateFee = 0;
+  let totalWithLateFee = 0;
+  if (isContractor && adminDate && contractorDate) {
+    const adminDateObj = new Date(adminDate);
+    const contractorDateObj = new Date(contractorDate);
+    // Calculate days difference (ignore time)
+    lateDays = Math.floor((contractorDateObj.setHours(0,0,0,0) - adminDateObj.setHours(0,0,0,0)) / (1000 * 60 * 60 * 24));
+    if (lateDays > 0) {
+      lateFeePercent = Math.min(lateDays * 5, 10); // 5% per day, max 10%
+    }
+    // Sum contractor's milestone amounts
+    contractorAmount = batch.milestones?.reduce((sum, ms) => sum + (ms.amount || 0), 0);
+    lateFee = Math.round(contractorAmount * lateFeePercent / 100);
+    totalWithLateFee = contractorAmount + lateFee;
+  }
+
   const downloadInvoice = async () => {
+    setIsGeneratingPDF(true);
+    // Wait for the DOM to update
+    await new Promise(resolve => setTimeout(resolve, 0));
+
     // Check if any milestone has completed and approved work
     const hasCompletedApprovedWork = batch.milestones?.some(milestone => 
       milestone.workStatus === 'completed' && milestone.workApproved
     );
+
+    // Only proceed if allowed
+    if (isContractor && !adminDownloaded) {
+      toast.error('Admin must download invoice before you can download.', { autoClose: 1000 });
+      return;
+    }
 
     try {
       // Force body and html background to white for html2canvas
@@ -78,7 +116,8 @@ const Invoice = ({ batch }) => {
           },
           body: JSON.stringify({
             userId: user?.id,
-            userRole: user?.role?.toLowerCase()
+            userRole: user?.role?.toLowerCase(),
+            milestoneIndex
           })
         });
       } catch (error) {
@@ -96,17 +135,52 @@ const Invoice = ({ batch }) => {
           body: JSON.stringify({
             userId: user?.id,
             userRole: user?.role?.toLowerCase(),
-            userName: user?.name
+            userName: user?.name,
+            milestoneIndex
           })
         });
       } catch (error) {
         console.error('Error sending invoice download notification:', error);
       }
 
-      toast.success('Invoice downloaded successfully',{autoClose: 1000});
+      // Only proceed if allowed
+      if (isContractor && !adminDownloaded) {
+        toast.error('Admin must download invoice before you can download.', { autoClose: 1000 });
+        return;
+      }
+
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/${import.meta.env.VITE_API_VERSION}/batches/${batch._id}/download-invoice`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify({
+          milestoneIndex,
+        })
+      });
+      let responseData;
+      try {
+        responseData = await res.json();
+      } catch (e) {
+        // If response is not JSON, handle gracefully
+        setIsGeneratingPDF(false)
+        toast.error('Server error: Invalid response', { autoClose: 1000 });
+        return;
+      }
+      if (!res.ok || !data.success) {
+        toast.error(data.message, { autoClose: 1000 });
+        return;
+      }
+      toast.success('Invoice downloaded successfully', { autoClose: 1000 });
+      setIsGeneratingPDF(false)
+
+      if (onDownloadSuccess) {
+        onDownloadSuccess();
+      }
     } catch (error) {
-      console.error('Error:', error);
-      toast.error('Error generating invoice. Please try again.',{autoClose: 1000});
+      setIsGeneratingPDF(false)
+      console.error('Error:', error.message);
     }
   };
 
@@ -186,6 +260,77 @@ const Invoice = ({ batch }) => {
                 <td style={{ border: '1px solid #e0e0e0', padding: '8px' }}>{ms.endDate ? new Date(ms.endDate).toLocaleDateString() : '-'}</td>
               </tr>
             ))}
+            {/* Late fee summary for contractor */}
+            {isContractor && contractorAmount > 0 && (
+              <>
+                <tr>
+                  <td colSpan={2} style={{ textAlign: 'right', fontWeight: 'bold' }}>Total Contractor Amount:</td>
+                  <td colSpan={3} style={{ fontWeight: 'bold' }}>₹{contractorAmount.toLocaleString()}</td>
+                </tr>
+                {lateFee > 0 && (
+                  <tr>
+                    <td colSpan={2} style={{ textAlign: 'right', color: 'red', fontWeight: 'bold' }}>Late Fee ({lateFeePercent}% for {lateDays} day{lateDays > 1 ? 's' : ''}):</td>
+                    <td colSpan={3} style={{ color: 'red', fontWeight: 'bold' }}>+ ₹{lateFee.toLocaleString()}</td>
+                  </tr>
+                )}
+                <tr>
+                  <td colSpan={2} style={{ textAlign: 'right', fontWeight: 'bold' }}>Total Amount Payable(after due date:- tax):</td>
+                  <td colSpan={3} style={{ fontWeight: 'bold' }}>₹{totalWithLateFee > 0 ? totalWithLateFee.toLocaleString() : contractorAmount.toLocaleString()}</td>
+                </tr>
+              </>
+            )}
+            {isContractor && (
+              isGeneratingPDF ? (
+                <>
+                  <tr>
+                    <td colSpan={5}>
+                      <div style={{ textAlign: 'center', marginTop: '10px' }}>
+                        <div style={{ color: adminDownloaded ? 'green' : 'red' }}>
+                          Admin downloaded: {adminDownloaded
+                            ? (adminDate ? new Date(adminDate).toLocaleString() : 'Yes')
+                            : 'Not yet'}
+                        </div>
+                        <div style={{ color: contractorDownloaded ? 'green' : 'red' }}>
+                          Contractor downloaded: {contractorDownloaded
+                            ? (contractorDate ? new Date(contractorDate).toLocaleString() : 'Yes')
+                            : 'Not yet'}
+                        </div>
+                      </div>
+                    </td>
+                  </tr>
+                  {!adminDownloaded && (
+                    <tr>
+                      <td colSpan={5}>
+                        <div style={{ color: 'red', textAlign: 'center' }}>
+                          Admin must download invoice before you can download.
+                        </div>
+                      </td>
+                    </tr>
+                  )}
+                </>
+              ) : (
+                <tr>
+                  <td colSpan={5}>
+                    <div style={{ color: '#888', textAlign: 'center', fontStyle: 'italic' }}>
+                    </div>
+                  </td>
+                </tr>
+              )
+            )}
+            {/* Admin can see status in browser as before */}
+            {isAdmin && !isContractor && (
+              <tr>
+                <td colSpan={5}>
+                  <div style={{ textAlign: 'center', marginTop: '10px' }}>
+                    <div style={{ color: adminDownloaded ? 'green' : 'red' }}>
+                      Admin downloaded: {adminDownloaded
+                        ? (adminDate ? new Date(adminDate).toLocaleString() : 'Yes')
+                        : 'Not yet'}
+                    </div>
+                  </div>
+                </td>
+              </tr>
+            )}
           </tbody>
         </table>
       </div>
@@ -193,7 +338,11 @@ const Invoice = ({ batch }) => {
         <p style={styles.footerText}>Thank you for your business!</p>
       </div>
     </div>
-      <button onClick={downloadInvoice} style={styles.downloadButton}>
+      <button
+        onClick={downloadInvoice}
+        style={styles.downloadButton}
+        disabled={isContractor && !adminDownloaded}
+      >
         Download Invoice
       </button>
     </>

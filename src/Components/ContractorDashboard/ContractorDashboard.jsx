@@ -43,7 +43,6 @@ const ContractorDashboard = () => {
       const data = await response.json();
 
       if (data.success) {
-        // Filter batches for the current contractor and get their milestones
         const contractorBatches = data.data.filter(
           (batch) => batch.milestones?.some(milestone => milestone.contractorId === user.id) && batch.status === "approved"
         );
@@ -127,14 +126,6 @@ const ContractorDashboard = () => {
         return;
       }
 
-      console.log('Updating work status:', {
-        batchId,
-        filteredIndex: milestoneIndex,
-        originalIndex: originalMilestoneIndex,
-        milestoneHeading: selectedMilestone.heading,
-        newStatus
-      });
-
       const response = await fetch(
         `${import.meta.env.VITE_API_URL}/${
           import.meta.env.VITE_API_VERSION
@@ -191,7 +182,6 @@ const ContractorDashboard = () => {
                 <th>ContractId</th>
                 <th>Title</th>
                 <th>Agency Name</th>
-                <th>Admin</th>
                 <th>Contractor Amount</th>
                 <th>Start Date</th>
                 <th>End Date</th>
@@ -220,19 +210,12 @@ const ContractorDashboard = () => {
                   const selectedMilestoneIndex = selectedMilestoneIndices[batch._id] || 0;
                   const selectedMilestone = contractorMilestones[selectedMilestoneIndex] || {};
                   
-                  // Debug logging
-                  console.log(`Batch ${batch.contractId}:`, {
-                    contractorMilestones: contractorMilestones.length,
-                    selectedMilestoneIndex,
-                    selectedMilestone: selectedMilestone.heading || 'N/A'
-                  });
-                  
                   return (
                     <tr key={batch._id}>
                       <td>{batch.contractId}</td>
                       <td>{batch.contractTitle}</td>
                       <td>{batch.agencyName}</td>
-                      <td>{batch.adminName || "Admin"}</td>
+                      {/* <td>{batch.adminName || "Admin"}</td> */}
                       <td>₹{selectedMilestone.amount || "N/A"}</td>
                       <td>{selectedMilestone.startDate?.split('T')[0] || "N/A"}</td>
                       <td>{selectedMilestone.endDate?.split('T')[0] || "N/A"}</td>
@@ -259,12 +242,29 @@ const ContractorDashboard = () => {
                           alt="invoice"
                           className="invoice-icon"
                           style={{
-                            opacity: selectedMilestone.workStatus === "completed" ? 1 : 0.7,
-                            cursor: selectedMilestone.workStatus === "completed"
+                            opacity: selectedMilestone.workStatus === "completed" && selectedMilestone?.invoiceDownloads?.admin?.downloaded ? 1 : 0.7,
+                            cursor: selectedMilestone.workStatus === "completed" && selectedMilestone?.invoiceDownloads?.admin?.downloaded
                               ? "pointer"
                               : "not-allowed",
                           }}
-                          onClick={() => handleInvoiceClick(batch)}
+                          onClick={() => {
+                            if (selectedMilestone.workStatus !== "completed") {
+                              toast.warning("Invoice will be available after work completion", { autoClose: 1000 });
+                              return;
+                            }
+                            if (!selectedMilestone?.invoiceDownloads?.admin?.downloaded) {
+                              toast.error("Admin must download the invoice before contractor can access it.", { autoClose: 1000 });
+                              return;
+                            }
+                            handleInvoiceClick(batch);
+                          }}
+                          title={
+                            selectedMilestone.workStatus !== "completed"
+                              ? "Invoice will be available after work completion"
+                              : !selectedMilestone?.invoiceDownloads?.admin?.downloaded
+                                ? "Admin must download invoice before you can download"
+                                : "Download Invoice"
+                          }
                         />
                       </td>
                       <td>

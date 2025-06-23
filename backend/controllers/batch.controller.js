@@ -468,31 +468,39 @@ const approveWork = async (req, res) => {
 const downloadInvoice = async (req, res) => {
   try {
     const batch = await Batch.findById(req.params.id);
-    const { role } = req.user || {}; // Make it optional
-    
+    const { role } = req.user || {};
+    const { milestoneIndex } = req.body;
+
     if (!batch) {
-      return res.status(404).json({
-        success: false,
-        message: "Batch not found",
-      });
+      return res.status(404).json({ success: false, message: "Batch not found" });
+    }
+    if (!batch.milestones[milestoneIndex]) {
+      return res.status(400).json({ success: false, message: "Invalid milestone index" });
     }
 
-    // Check if user is admin (default to admin if no user info)
-    const isAdmin = role === 'admin' || !req.user;
+    const milestone = batch.milestones[milestoneIndex];
+    const now = new Date();
 
-    // For admin: check if contractor has downloaded first
-    // if (isAdmin && !batch.invoiceDownloaded) {
-    //   return res.status(403).json({
-    //     success: false,
-    //     message: "Contractor must download the invoice before admin can access it.",
-    //   });
-    // }
+    // Check for required fields before updating
+    if (milestone.bidAmount == null) {
+      return res.status(400).json({ success: false, message: "Milestone is missing required bidAmount" });
+    }
 
-    // Update tracking flags based on user role
-    if (isAdmin) {
-      batch.adminInvoiceDownloaded = true;
+    if (role === "admin") {
+      milestone.invoiceDownloads.admin.downloaded = true;
+      milestone.invoiceDownloads.admin.date = now;
+    } else if (role === "Contractor") {
+      // Contractor can only download if admin has already downloaded
+      if (!milestone.invoiceDownloads.admin.downloaded) {
+        return res.status(403).json({
+          success: false,
+          message: "Admin must download the invoice before contractor can access it."
+        });
+      }
+      milestone.invoiceDownloads.contractor.downloaded = true;
+      milestone.invoiceDownloads.contractor.date = now;
     } else {
-      batch.invoiceDownloaded = true;
+      return res.status(403).json({ success: false, message: "Unauthorized role" });
     }
 
     await batch.save();
@@ -507,28 +515,30 @@ const downloadInvoice = async (req, res) => {
       contractorName: contractorName,
       contractTitle: batch.contractTitle,
       timestamp: timestamp.toISOString(),
-      downloadedBy: isAdmin ? 'admin' : 'contractor'
+      // downloadedBy: isAdmin ? 'admin' : 'contractor'
     });
+    try {
+      await batch.save();
+    } catch (err) {
+      return res.status(400).json({
+        success: false,
+        message: "Error saving invoice download status",
+        error: err.message
+      });
+    }
 
-    // Return success response
     return res.status(200).json({
       success: true,
-      message: `Invoice downloaded successfully (${isAdmin ? 'admin' : 'contractor'}).`,
+      message: `Invoice downloaded successfully by ${role}.`,
       data: {
         contractTitle: batch.contractTitle,
-        contractorName: contractorName,
-        bidValue: batch.bidValue,
-        downloadedBy: isAdmin ? 'admin' : 'contractor',
-        timestamp: timestamp.toISOString()
+        milestoneHeading: milestone.heading,
+        downloadedBy: role,
+        date: now
       }
     });
-
   } catch (error) {
-    console.error("Error downloading invoice:", error);
-    return res.status(500).json({
-      success: false,
-      message: "Server error",
-    });
+    return res.status(500).json({ success: false, message: "Server error" });
   }
 };
 
@@ -573,14 +583,10 @@ const updatePaymentInfo = async (req, res) => {
         agencytoNhaiTransactionId: transactionId,
         agencytoNhaiTransactionDate: new Date(transactionDate),
         agencytoNhaiPaymentMedia: req.file ? `/payment-media/${req.file.filename}` : "",
-        agencytoNhaiAmount: amount || milestone.bidAmount || 0, // Use provided amount or milestone bidAmount as fallback
+        agencytoNhaiAmount: amount || milestone.bidAmount || 0, 
         agencytoNhaiPaymentStatus: "completed"
       };
-
-      console.log("Adding agency payment:", newAgencyPayment);
       milestone.agencytoNhai.push(newAgencyPayment);
-
-      // Send notification to admin
       await pusher.trigger("admin-channel", "agency-payment-received", {
         id: `agency-payment-${Date.now()}`,
         message: `Payment received from ${batch.agencyName} for contract: ${batch.contractTitle}`,
@@ -599,8 +605,6 @@ const updatePaymentInfo = async (req, res) => {
           message: "Transaction ID, Transaction Date, and Amount are required for NHAI payment"
         });
       }
-
-      // Check if the milestone's work is completed and approved
       if (milestone.workStatus !== "completed") {
         return res.status(400).json({
           success: false,
@@ -630,14 +634,8 @@ const updatePaymentInfo = async (req, res) => {
         nhaiToContractorTransactionDate: new Date(transactionDate),
         nhaiToContractorPaymentMedia: req.file ? `/payment-media/${req.file.filename}` : "",
         nhaiToContractorPaymentStatus: "completed"
-        // Note: You didn't add amount field to nhaiToContractor in your model
-        // If you want to add it, you need to update the model first
       };
-
-      console.log("Adding NHAI payment:", newNhaiPayment);
       milestone.nhaiToContractor.push(newNhaiPayment);
-
-      // Send notification to contractor
       await pusher.trigger(
         "contractor-channel",
         `payment-completed-${milestone.contractorId}`,
@@ -649,11 +647,9 @@ const updatePaymentInfo = async (req, res) => {
           batchId: batch._id,
           milestoneIndex: milestoneIndex,
           milestoneHeading: milestone.heading,
-          amount: amount // Fixed: use amount instead of bidAmount
+          amount: amount 
         }
       );
-
-      // Send notification to admin
       await pusher.trigger("admin-channel", "contractor-payment-sent", {
         id: `contractor-payment-${Date.now()}`,
         message: `Payment sent to ${milestone.contractorName} for milestone "${milestone.heading}" in ${batch.contractTitle}`,
@@ -663,7 +659,7 @@ const updatePaymentInfo = async (req, res) => {
         contractorName: milestone.contractorName,
         contractTitle: batch.contractTitle,
         milestoneHeading: milestone.heading,
-        amount: amount // Fixed: use amount instead of bidAmount
+        amount: amount 
       });
     } else {
       return res.status(400).json({
@@ -712,12 +708,10 @@ const updateMilestoneStatus = async (req, res) => {
       });
     }
 
-    // Get the milestone details to find all similar milestones
     const targetMilestone = batch.milestones[milestoneIndex];
     const contractorId = targetMilestone.contractorId;
     const milestoneHeading = targetMilestone.heading;
 
-    // Update ALL milestones with the same contractorId and heading
     let updatedCount = 0;
     batch.milestones.forEach((milestone, index) => {
       if (milestone.contractorId.toString() === contractorId.toString() && 
@@ -733,7 +727,7 @@ const updateMilestoneStatus = async (req, res) => {
 
     await batch.save();
 
-    // Send notification to admin
+
     const contractorName = targetMilestone?.contractorName || "Unknown Contractor";
     await pusher.trigger("admin-channel", "milestone-status-update", {
       message: `${contractorName} has "${milestoneHeading}" milestone  ${workStatus} (${batch.contractTitle})`,
@@ -747,7 +741,7 @@ const updateMilestoneStatus = async (req, res) => {
       timestamp: new Date().toISOString(),
     });
 
-    // Send notification to agency
+
     await pusher.trigger(`agency-channel`, `milestone-status-update-${batch.agencyId}`, {
       id: `milestone-${Date.now()}`,
       message: `Milestone status updated for ${batch.contractTitle}`,
@@ -787,7 +781,6 @@ const trackInvoiceDownload = async (req, res) => {
       });
     }
 
-    // Add download tracking information
     const downloadRecord = {
       userId: userId,
       userRole: userRole,

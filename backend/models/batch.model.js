@@ -32,10 +32,6 @@ const batchSchema = new mongoose.Schema(
     completedAt: {
       type: Date,
     },
-    invoiceDownloaded: {
-      type: Boolean,
-      default: false,
-    },
 
     milestones: [
       {
@@ -45,11 +41,10 @@ const batchSchema = new mongoose.Schema(
         },
         bidAmount: {
           type: Number,
-          required: [true, "Bid amount is required"],
         },
         bidDuration: {
-        type: String,
-        required: false,
+          type: String,
+          required: false,
         },
         contractorId: {
           type: mongoose.Schema.Types.ObjectId,
@@ -102,6 +97,28 @@ const batchSchema = new mongoose.Schema(
         completedAt: {
           type: Date
         },
+        invoiceDownloads: {
+          admin: {
+            downloaded: {
+              type: Boolean,
+              default: false
+            },
+            date: {
+              type: Date,
+              default: null
+            }
+          },
+          contractor: {
+            downloaded: {
+              type: Boolean,
+              default: false
+            },
+            date: {
+              type: Date,
+              default: null
+            }
+          }
+        },
         nhaiToContractor: [
           {
             nhaiToContractorTransactionId: {
@@ -113,11 +130,11 @@ const batchSchema = new mongoose.Schema(
               required: [true, "Transaction date is required"],
               default: Date.now
             },
-            nhaiToContractorPaymentMedia:{
+            nhaiToContractorPaymentMedia: {
               type: String,
               required: [true, "Payment media is required"]
             },
-            nhaiToContractorPaymentStatus:{
+            nhaiToContractorPaymentStatus: {
               type: String,
               enum: ["pending", "completed"],
               default: "pending"
