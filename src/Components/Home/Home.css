@@ -1061,6 +1061,9 @@ html {
   .section-content {
     padding: 30px !important;
   }
+  .info-boxes {
+    gap:0.5rem;
+  }
 }
 @media (max-width: 1024px) and (min-width: 992px) {
   .hero-container {
@@ -1133,6 +1136,9 @@ html {
 
   .section-content {
     padding: 25px !important;
+  }
+  .info-boxes {
+    gap:0.5rem;
   }
 }
 
@@ -1218,13 +1224,22 @@ html {
   .milestone-box {
     padding: 10px 20px 10px 20px;
   }
-
+  .watch-demo{
+    padding:10px 25px;
+  }
+  .get-started{
+    padding:10px 25px;
+  }
   .milestone-subtext, .milestone-text {
     font-size: 11px;
   }
 
   .section-content {
     padding: 20px !important;
+  }
+
+  .info-boxes {
+    gap:0.5rem;
   }
 }
 
@@ -1235,9 +1250,9 @@ html {
   .info-box p {
     font-size: 9px;
   }
-.platform-features-section, .use-case-section {
-padding:0px;
-}
+  .platform-features-section, .use-case-section {
+  padding:0px;
+  }
   .hero-image{
     width:350px;
   }
@@ -1248,7 +1263,12 @@ padding:0px;
     width: 53vw;
     font-size: 25px;
   }
-
+  .watch-demo{
+    padding:10px 25px;
+  }
+  .get-started{
+    padding:10px 25px;
+  }
   .description {
     width: 90vw;
     font-size: 10px;
@@ -1284,6 +1304,9 @@ padding:0px;
   .section-content{
     padding: 20px !important;
   }
+  .info-box{
+    padding: 10px 10px 10px 10px;
+  }
 }
 @media (max-width: 576px) and (min-width:375px) {
   .logocontainercompany{
@@ -1298,10 +1321,16 @@ padding:0px;
     font-size: 26px;
     font-weight: 700;
   }
+  .watch-demo{
+    padding:10px 25px;
+  }
+  .get-started{
+    padding:10px 25px;
+  }
   .info-boxes {
     display: grid;
     justify-content: flex-start;
-    gap: 1.5rem;
+      gap:0.5rem;
     margin-top: 1rem;
   }
   .info-box p {
