@@ -20,6 +20,7 @@ const ContractorDashboard = () => {
   const [selectedBatchInfo, setSelectedBatchInfo] = useState(null);
   const [refreshTrigger, setRefreshTrigger] = useState(false);
   const [selectedMilestoneIndices, setSelectedMilestoneIndices] = useState({});
+  const [selectedMilestoneForInvoice, setSelectedMilestoneForInvoice] = useState(null);
 
   const navigate = useNavigate();
 
@@ -88,14 +89,23 @@ const ContractorDashboard = () => {
     const contractorMilestones = batch.milestones?.filter(m => m.contractorId === user.id) || [];
     const selectedMilestoneIndex = selectedMilestoneIndices[batch._id] || 0;
     const selectedMilestone = contractorMilestones[selectedMilestoneIndex] || {};
-    if (selectedMilestone.workStatus === 'completed') {
+    
+    // Find the original milestone in the batch to check admin download status
+    const originalMilestoneIndex = batch.milestones?.findIndex(m => m._id === selectedMilestone._id) || 0;
+    const originalMilestone = batch.milestones?.[originalMilestoneIndex] || {};
+    const adminDownloaded = originalMilestone?.invoiceDownloads?.admin?.downloaded;
+    
+    if (selectedMilestone.workStatus === 'completed' && adminDownloaded) {
       setSelectedInvoice(batch);
-    } else {
+      setSelectedMilestoneForInvoice(selectedMilestone);
+    } else if (selectedMilestone.workStatus !== 'completed') {
       toast.warning(
         "Invoice will be available after work completion (when status is 'completed')",{
           autoClose: 1000,
         }
       );
+    } else if (!adminDownloaded) {
+      toast.error("Admin must download the invoice before contractor can access it.", { autoClose: 1000 });
     }
   };
 
@@ -210,6 +220,11 @@ const ContractorDashboard = () => {
                   const selectedMilestoneIndex = selectedMilestoneIndices[batch._id] || 0;
                   const selectedMilestone = contractorMilestones[selectedMilestoneIndex] || {};
                   
+                  // Find the original milestone in the batch to check admin download status
+                  const originalMilestoneIndex = batch.milestones?.findIndex(m => m._id === selectedMilestone._id) || 0;
+                  const originalMilestone = batch.milestones?.[originalMilestoneIndex] || {};
+                  const adminDownloaded = originalMilestone?.invoiceDownloads?.admin?.downloaded;
+                  
                   return (
                     <tr key={batch._id}>
                       <td>{batch.contractId}</td>
@@ -242,8 +257,8 @@ const ContractorDashboard = () => {
                           alt="invoice"
                           className="invoice-icon"
                           style={{
-                            opacity: selectedMilestone.workStatus === "completed" && selectedMilestone?.invoiceDownloads?.admin?.downloaded ? 1 : 0.7,
-                            cursor: selectedMilestone.workStatus === "completed" && selectedMilestone?.invoiceDownloads?.admin?.downloaded
+                            opacity: selectedMilestone.workStatus === "completed" && adminDownloaded ? 1 : 0.7,
+                            cursor: selectedMilestone.workStatus === "completed" && adminDownloaded
                               ? "pointer"
                               : "not-allowed",
                           }}
@@ -252,7 +267,7 @@ const ContractorDashboard = () => {
                               toast.warning("Invoice will be available after work completion", { autoClose: 1000 });
                               return;
                             }
-                            if (!selectedMilestone?.invoiceDownloads?.admin?.downloaded) {
+                            if (!adminDownloaded) {
                               toast.error("Admin must download the invoice before contractor can access it.", { autoClose: 1000 });
                               return;
                             }
@@ -261,7 +276,7 @@ const ContractorDashboard = () => {
                           title={
                             selectedMilestone.workStatus !== "completed"
                               ? "Invoice will be available after work completion"
-                              : !selectedMilestone?.invoiceDownloads?.admin?.downloaded
+                              : !adminDownloaded
                                 ? "Admin must download invoice before you can download"
                                 : "Download Invoice"
                           }
@@ -348,7 +363,14 @@ const ContractorDashboard = () => {
             >
               Close
             </button>
-            <Invoice batch={selectedInvoice} />
+            <Invoice 
+              batch={selectedInvoice} 
+              onDownloadSuccess={() => {
+                fetchBatches(); // Refresh the data after download
+                setSelectedInvoice(null); // Close the modal
+              }}
+              selectedMilestone={selectedMilestoneForInvoice}
+            />
           </div>
         </div>
       )}

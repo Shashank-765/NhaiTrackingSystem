@@ -235,7 +235,6 @@ export const NotificationProvider = ({ children }) => {
     console.log('Adding new notification:', notification);
     setNotifications((prev) => {
       const newNotifications = [notification, ...prev];
-      console.log('Updated notifications:', newNotifications);
       return newNotifications;
     });
     setHasNewNotification(true);

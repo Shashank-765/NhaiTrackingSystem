@@ -5,20 +5,42 @@ import { toast } from 'react-toastify';
 import { useAuth } from '../../context/AuthContext';
 import { FaRegFileAlt, FaUser, FaLink } from 'react-icons/fa';
 
-const Invoice = ({ batch }) => {
+const Invoice = ({ batch, onDownloadSuccess = () => {}, selectedMilestone: propSelectedMilestone }) => {
   const invoiceRef = useRef();
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
   const { user } = useAuth();
   const isAdmin = user?.role?.toLowerCase() === 'admin';
   const isContractor = user?.role?.toLowerCase() === 'contractor';
   
+  // Filter milestones for contractor first
+  let milestonesToShow = batch.milestones;
+  if (isContractor) {
+    let contractorName = user?.name;
+    if (!contractorName && localStorage.getItem('user')) {
+      try {
+        contractorName = JSON.parse(localStorage.getItem('user')).name;
+      } catch {}
+    }
+    milestonesToShow = batch.milestones?.filter(ms => ms.contractorName === contractorName);
+  }
+  
+  // Filter milestones to show only completed work status
+  milestonesToShow = milestonesToShow?.filter(ms => ms.workStatus === 'completed') || [];
+  
+  // If a specific milestone is provided and it's not in the filtered list, add it
+  if (propSelectedMilestone && !milestonesToShow.find(ms => ms._id === propSelectedMilestone._id)) {
+    milestonesToShow = [propSelectedMilestone, ...milestonesToShow];
+  }
+  
   // Calculate total bid value from milestones
   const totalBidValue = batch.milestones?.reduce((total, milestone) => {
-    return total + (milestone.amount || 0);
+    return total + (milestone.workStatus === 'completed' ? (milestone.amount || 0) : 0);
   }, 0) || 0;
   
-  const milestoneIndex = 0; 
-  const milestone = batch.milestones[milestoneIndex];
+  // Find the correct milestone index in the original batch
+  const selectedMilestone = propSelectedMilestone || (milestonesToShow && milestonesToShow.length > 0 ? milestonesToShow[0] : batch.milestones[0]);
+  const milestoneIndex = batch.milestones?.findIndex(m => m._id === selectedMilestone._id) || 0;
+  let milestone = selectedMilestone;
   const adminDownloaded = milestone?.invoiceDownloads?.admin?.downloaded;
   const contractorDownloaded = milestone?.invoiceDownloads?.contractor?.downloaded;
   const adminDate = milestone?.invoiceDownloads?.admin?.date;
@@ -39,7 +61,9 @@ const Invoice = ({ batch }) => {
       lateFeePercent = Math.min(lateDays * 5, 10); // 5% per day, max 10%
     }
     // Sum contractor's milestone amounts
-    contractorAmount = batch.milestones?.reduce((sum, ms) => sum + (ms.amount || 0), 0);
+    contractorAmount = batch.milestones?.reduce((sum, ms) => {
+      return sum + (ms.workStatus === 'completed' ? (ms.amount || 0) : 0);
+    }, 0);
     lateFee = Math.round(contractorAmount * lateFeePercent / 100);
     totalWithLateFee = contractorAmount + lateFee;
   }
@@ -54,9 +78,27 @@ const Invoice = ({ batch }) => {
       milestone.workStatus === 'completed' && milestone.workApproved
     );
 
-    // Only proceed if allowed
+    // Check if there are completed milestones
+    if (!milestonesToShow || milestonesToShow.length === 0) {
+      toast.error('No completed milestones available for invoice generation.', { autoClose: 3000 });
+      setIsGeneratingPDF(false);
+      return;
+    }
+
+    // Check payment status for admin
+    if (isAdmin) {
+      const lastNhaiPayment = milestone?.nhaiToContractor?.at(-1);
+      if (!lastNhaiPayment || lastNhaiPayment.nhaiToContractorPaymentStatus !== "completed") {
+        toast.error('Cannot download invoice. NHAI to contractor payment must be completed first.', { autoClose: 3000 });
+        setIsGeneratingPDF(false);
+        return;
+      }
+    }
+
+    // Only proceed if allowed for contractor
     if (isContractor && !adminDownloaded) {
       toast.error('Admin must download invoice before you can download.', { autoClose: 1000 });
+      setIsGeneratingPDF(false);
       return;
     }
 
@@ -143,12 +185,6 @@ const Invoice = ({ batch }) => {
         console.error('Error sending invoice download notification:', error);
       }
 
-      // Only proceed if allowed
-      if (isContractor && !adminDownloaded) {
-        toast.error('Admin must download invoice before you can download.', { autoClose: 1000 });
-        return;
-      }
-
       const res = await fetch(`${import.meta.env.VITE_API_URL}/${import.meta.env.VITE_API_VERSION}/batches/${batch._id}/download-invoice`, {
         method: 'POST',
         headers: {
@@ -159,6 +195,9 @@ const Invoice = ({ batch }) => {
           milestoneIndex,
         })
       });
+      
+      console.log('Sending milestoneIndex:', milestoneIndex, 'for milestone:', milestone.heading);
+      
       let responseData;
       try {
         responseData = await res.json();
@@ -168,12 +207,21 @@ const Invoice = ({ batch }) => {
         toast.error('Server error: Invalid response', { autoClose: 1000 });
         return;
       }
-      if (!res.ok || !data.success) {
-        toast.error(data.message, { autoClose: 1000 });
+      
+      if (!res.ok || !responseData.success) {
+        toast.error(responseData.message || 'Error downloading invoice', { autoClose: 3000 });
+        setIsGeneratingPDF(false);
         return;
       }
+      
+      // Show success message with tax info if applicable
+      if (responseData.data.taxApplied) {
+        toast.success(`Invoice downloaded successfully. 5% tax applied due to delayed download.`, { autoClose: 3000 });
+      } else {
       toast.success('Invoice downloaded successfully', { autoClose: 1000 });
-      setIsGeneratingPDF(false)
+      }
+      
+      setIsGeneratingPDF(false);
 
       if (onDownloadSuccess) {
         onDownloadSuccess();
@@ -181,20 +229,9 @@ const Invoice = ({ batch }) => {
     } catch (error) {
       setIsGeneratingPDF(false)
       console.error('Error:', error.message);
+      toast.error('Error generating invoice', { autoClose: 1000 });
     }
   };
-
-  // Filter milestones for contractor
-  let milestonesToShow = batch.milestones;
-  if (isContractor) {
-    let contractorName = user?.name;
-    if (!contractorName && localStorage.getItem('user')) {
-      try {
-        contractorName = JSON.parse(localStorage.getItem('user')).name;
-      } catch {}
-    }
-    milestonesToShow = batch.milestones?.filter(ms => ms.contractorName === contractorName);
-  }
 
   return (
     <>
@@ -248,42 +285,89 @@ const Invoice = ({ batch }) => {
               <th style={{ border: '1px solid #e0e0e0', padding: '8px' }}>Amount</th>
               <th style={{ border: '1px solid #e0e0e0', padding: '8px' }}>Start Date</th>
               <th style={{ border: '1px solid #e0e0e0', padding: '8px' }}>End Date</th>
+              <th style={{ border: '1px solid #e0e0e0', padding: '8px' }}>Actual Amount</th>
             </tr>
           </thead>
           <tbody>
-            {milestonesToShow && milestonesToShow.map((ms, idx) => (
+            {milestonesToShow && milestonesToShow.length > 0 ? (
+              milestonesToShow.map((ms, idx) => {
+                // Calculate actual amount for this milestone
+                const actualAmount = ms.taxApplied ? ms.totalWithTax : ms.amount;
+                const taxInfo = ms.taxApplied ? ` (incl. ${ms.taxPercentage}% tax)` : '';
+                
+                return (
               <tr key={idx}>
                 <td style={{ border: '1px solid #e0e0e0', padding: '8px' }}>{ms.heading}</td>
                 <td style={{ border: '1px solid #e0e0e0', padding: '8px' }}>{ms.contractorName}</td>
                 <td style={{ border: '1px solid #e0e0e0', padding: '8px' }}>₹{ms.amount?.toLocaleString()}</td>
                 <td style={{ border: '1px solid #e0e0e0', padding: '8px' }}>{ms.startDate ? new Date(ms.startDate).toLocaleDateString() : '-'}</td>
                 <td style={{ border: '1px solid #e0e0e0', padding: '8px' }}>{ms.endDate ? new Date(ms.endDate).toLocaleDateString() : '-'}</td>
+                    <td style={{ border: '1px solid #e0e0e0', padding: '8px' }}>
+                      <div>₹{actualAmount?.toLocaleString()}</div>
+                      {ms.taxApplied && (
+                        <div style={{ fontSize: '12px', color: '#666', fontStyle: 'italic' }}>
+                          {taxInfo}
+                        </div>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })
+            ) : (
+              <tr>
+                <td colSpan={6} style={{ textAlign: 'center', padding: '20px', color: '#666', fontStyle: 'italic' }}>
+                  No completed milestones available for invoice
+                </td>
               </tr>
-            ))}
+            )}
             {/* Late fee summary for contractor */}
             {isContractor && contractorAmount > 0 && (
               <>
                 <tr>
                   <td colSpan={2} style={{ textAlign: 'right', fontWeight: 'bold' }}>Total Contractor Amount:</td>
-                  <td colSpan={3} style={{ fontWeight: 'bold' }}>₹{contractorAmount.toLocaleString()}</td>
+                  <td colSpan={4} style={{ fontWeight: 'bold' }}>₹{contractorAmount.toLocaleString()}</td>
                 </tr>
                 {lateFee > 0 && (
                   <tr>
                     <td colSpan={2} style={{ textAlign: 'right', color: 'red', fontWeight: 'bold' }}>Late Fee ({lateFeePercent}% for {lateDays} day{lateDays > 1 ? 's' : ''}):</td>
-                    <td colSpan={3} style={{ color: 'red', fontWeight: 'bold' }}>+ ₹{lateFee.toLocaleString()}</td>
+                    <td colSpan={4} style={{ color: 'red', fontWeight: 'bold' }}>+ ₹{lateFee.toLocaleString()}</td>
                   </tr>
                 )}
                 <tr>
                   <td colSpan={2} style={{ textAlign: 'right', fontWeight: 'bold' }}>Total Amount Payable(after due date:- tax):</td>
-                  <td colSpan={3} style={{ fontWeight: 'bold' }}>₹{totalWithLateFee > 0 ? totalWithLateFee.toLocaleString() : contractorAmount.toLocaleString()}</td>
+                  <td colSpan={4} style={{ fontWeight: 'bold' }}>₹{totalWithLateFee > 0 ? totalWithLateFee.toLocaleString() : contractorAmount.toLocaleString()}</td>
                 </tr>
               </>
             )}
+            
+            {/* Payment status information */}
+            {isAdmin && (
+              <tr>
+                <td colSpan={6}>
+                  <div style={{ textAlign: 'center', marginTop: '10px' }}>
+                    <div style={{ color: milestone?.nhaiToContractor?.at(-1)?.nhaiToContractorPaymentStatus === 'completed' ? 'green' : 'red' }}>
+                      Payment Status: {milestone?.nhaiToContractor?.at(-1)?.nhaiToContractorPaymentStatus === 'completed' ? 'Completed' : 'Pending'}
+                    </div>
+                    {milestone?.nhaiToContractor?.at(-1)?.nhaiToContractorTransactionDate && (
+                      <div style={{ color: '#666', fontSize: '12px' }}>
+                        Payment Date: {new Date(milestone.nhaiToContractor.at(-1).nhaiToContractorTransactionDate).toLocaleDateString()}
+                      </div>
+                    )}
+                    <div style={{ color: adminDownloaded ? 'green' : 'red' }}>
+                      Admin downloaded: {adminDownloaded
+                        ? (adminDate ? new Date(adminDate).toLocaleString() : 'Yes')
+                        : 'Not yet'}
+                    </div>
+                  </div>
+                </td>
+              </tr>
+            )}
+            
             {isContractor && (
               isGeneratingPDF ? (
                 <>
                   <tr>
-                    <td colSpan={5}>
+                    <td colSpan={6}>
                       <div style={{ textAlign: 'center', marginTop: '10px' }}>
                         <div style={{ color: adminDownloaded ? 'green' : 'red' }}>
                           Admin downloaded: {adminDownloaded
@@ -300,7 +384,7 @@ const Invoice = ({ batch }) => {
                   </tr>
                   {!adminDownloaded && (
                     <tr>
-                      <td colSpan={5}>
+                      <td colSpan={6}>
                         <div style={{ color: 'red', textAlign: 'center' }}>
                           Admin must download invoice before you can download.
                         </div>
@@ -310,7 +394,7 @@ const Invoice = ({ batch }) => {
                 </>
               ) : (
                 <tr>
-                  <td colSpan={5}>
+                  <td colSpan={6}>
                     <div style={{ color: '#888', textAlign: 'center', fontStyle: 'italic' }}>
                     </div>
                   </td>
@@ -320,7 +404,7 @@ const Invoice = ({ batch }) => {
             {/* Admin can see status in browser as before */}
             {isAdmin && !isContractor && (
               <tr>
-                <td colSpan={5}>
+                <td colSpan={6}>
                   <div style={{ textAlign: 'center', marginTop: '10px' }}>
                     <div style={{ color: adminDownloaded ? 'green' : 'red' }}>
                       Admin downloaded: {adminDownloaded
@@ -340,11 +424,61 @@ const Invoice = ({ batch }) => {
     </div>
       <button
         onClick={downloadInvoice}
-        style={styles.downloadButton}
-        disabled={isContractor && !adminDownloaded}
+        style={{
+          ...styles.downloadButton,
+          backgroundColor: (
+            (isContractor && !adminDownloaded) || 
+            (isAdmin && (!milestone?.nhaiToContractor?.at(-1) || milestone.nhaiToContractor.at(-1).nhaiToContractorPaymentStatus !== "completed"))
+          ) ? '#cccccc' : '#4CAF50',
+          cursor: (
+            (isContractor && !adminDownloaded) || 
+            (isAdmin && (!milestone?.nhaiToContractor?.at(-1) || milestone.nhaiToContractor.at(-1).nhaiToContractorPaymentStatus !== "completed"))
+          ) ? 'not-allowed' : 'pointer',
+          color: (
+            (isContractor && !adminDownloaded) || 
+            (isAdmin && (!milestone?.nhaiToContractor?.at(-1) || milestone.nhaiToContractor.at(-1).nhaiToContractorPaymentStatus !== "completed"))
+          ) ? '#666666' : 'white'
+        }}
+        disabled={
+          (isContractor && !adminDownloaded) || 
+          (isAdmin && (!milestone?.nhaiToContractor?.at(-1) || milestone.nhaiToContractor.at(-1).nhaiToContractorPaymentStatus !== "completed")) ||
+          (!milestonesToShow || milestonesToShow.length === 0)
+        }
       >
-        Download Invoice
+        {!milestonesToShow || milestonesToShow.length === 0 
+          ? "No Completed Milestones" 
+          : isAdmin && (!milestone?.nhaiToContractor?.at(-1) || milestone.nhaiToContractor.at(-1).nhaiToContractorPaymentStatus !== "completed") 
+            ? "Payment Not Completed" 
+            : "Download Invoice"
+        }
       </button>
+      
+      {/* Helper text for payment requirements */}
+      {isAdmin && (!milestone?.nhaiToContractor?.at(-1) || milestone.nhaiToContractor.at(-1).nhaiToContractorPaymentStatus !== "completed") && (
+        <div style={{ textAlign: 'center', color: '#666', fontSize: '14px', marginTop: '10px' }}>
+          ⚠️ NHAI to contractor payment must be completed before downloading invoice
+        </div>
+      )}
+      
+      {/* Helper text for no completed milestones */}
+      {(!milestonesToShow || milestonesToShow.length === 0) && (
+        <div style={{ textAlign: 'center', color: '#666', fontSize: '14px', marginTop: '10px' }}>
+          ⚠️ No completed milestones available for invoice generation
+        </div>
+      )}
+      
+      {/* Helper text for tax information */}
+      {isAdmin && milestone?.nhaiToContractor?.at(-1)?.nhaiToContractorPaymentStatus === "completed" && milestonesToShow && milestonesToShow.length > 0 && (
+        <div style={{ textAlign: 'center', color: '#666', fontSize: '14px', marginTop: '10px' }}>
+          Downloading on the same date as payment avoids 5% tax
+        </div>
+      )}
+      
+      {isContractor && !adminDownloaded && (
+        <div style={{ textAlign: 'center', color: '#666', fontSize: '14px', marginTop: '10px' }}>
+        Admin must download invoice before contractor can access it
+        </div>
+      )}
     </>
   );
 };

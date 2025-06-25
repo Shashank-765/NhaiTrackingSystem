@@ -467,14 +467,19 @@ const approveWork = async (req, res) => {
 // download invoice - handles all invoice operations
 const downloadInvoice = async (req, res) => {
   try {
+    console.log("Download Invoice API called");
     const batch = await Batch.findById(req.params.id);
     const { role } = req.user || {};
     const { milestoneIndex } = req.body;
 
+    console.log("milestoneIndex from request:", milestoneIndex);
+
     if (!batch) {
+      console.log("Batch not found");
       return res.status(404).json({ success: false, message: "Batch not found" });
     }
     if (!batch.milestones[milestoneIndex]) {
+      console.log("Invalid milestone index");
       return res.status(400).json({ success: false, message: "Invalid milestone index" });
     }
 
@@ -487,9 +492,59 @@ const downloadInvoice = async (req, res) => {
     }
 
     if (role === "admin") {
+      // Check if NHAI to contractor payment is completed
+      const lastNhaiPayment = milestone.nhaiToContractor.at(-1);
+      if (!lastNhaiPayment || lastNhaiPayment.nhaiToContractorPaymentStatus !== "completed") {
+        return res.status(403).json({
+          success: false,
+          message: "Cannot download invoice. NHAI to contractor payment must be completed first."
+        });
+      }
+
+      // Check if payment date and download date are the same
+      const paymentDate = new Date(lastNhaiPayment.nhaiToContractorTransactionDate);
+      const paymentDateOnly = new Date(paymentDate.getFullYear(), paymentDate.getMonth(), paymentDate.getDate());
+      const downloadDateOnly = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      
+      const isSameDate = paymentDateOnly.getTime() === downloadDateOnly.getTime();
+      
+      // Initialize invoiceDownloads if it doesn't exist
+      if (!milestone.invoiceDownloads) {
+        milestone.invoiceDownloads = {
+          admin: { downloaded: false, date: null },
+          contractor: { downloaded: false, date: null }
+        };
+      }
+      
+      // Update admin download status
       milestone.invoiceDownloads.admin.downloaded = true;
       milestone.invoiceDownloads.admin.date = now;
+      
+      // Add tax calculation info to milestone if dates are different
+      if (!isSameDate) {
+        // Calculate days late
+        const daysLate = Math.floor((downloadDateOnly - paymentDateOnly) / (1000 * 60 * 60 * 24));
+        const taxPercentage = daysLate * 5;
+        milestone.taxApplied = true;
+        milestone.taxPercentage = taxPercentage;
+        milestone.taxAmount = Math.round(milestone.amount * (taxPercentage / 100));
+        milestone.totalWithTax = milestone.amount + milestone.taxAmount;
+      } else {
+        milestone.taxApplied = false;
+        milestone.taxPercentage = 0;
+        milestone.taxAmount = 0;
+        milestone.totalWithTax = milestone.amount;
+      }
+
     } else if (role === "Contractor") {
+      // Initialize invoiceDownloads if it doesn't exist
+      if (!milestone.invoiceDownloads) {
+        milestone.invoiceDownloads = {
+          admin: { downloaded: false, date: null },
+          contractor: { downloaded: false, date: null }
+        };
+      }
+      
       // Contractor can only download if admin has already downloaded
       if (!milestone.invoiceDownloads.admin.downloaded) {
         return res.status(403).json({
@@ -503,7 +558,11 @@ const downloadInvoice = async (req, res) => {
       return res.status(403).json({ success: false, message: "Unauthorized role" });
     }
 
+    console.log("Before save - milestone.invoiceDownloads:", JSON.stringify(milestone.invoiceDownloads, null, 2));
+    milestone.markModified('invoiceDownloads');
+    batch.markModified('milestones');
     await batch.save();
+    console.log("After save - milestone.invoiceDownloads:", JSON.stringify(milestone.invoiceDownloads, null, 2));
 
     // Send notification
     const timestamp = new Date();
@@ -517,15 +576,6 @@ const downloadInvoice = async (req, res) => {
       timestamp: timestamp.toISOString(),
       // downloadedBy: isAdmin ? 'admin' : 'contractor'
     });
-    try {
-      await batch.save();
-    } catch (err) {
-      return res.status(400).json({
-        success: false,
-        message: "Error saving invoice download status",
-        error: err.message
-      });
-    }
 
     return res.status(200).json({
       success: true,
@@ -534,10 +584,15 @@ const downloadInvoice = async (req, res) => {
         contractTitle: batch.contractTitle,
         milestoneHeading: milestone.heading,
         downloadedBy: role,
-        date: now
+        date: now,
+        taxApplied: milestone.taxApplied || false,
+        taxPercentage: milestone.taxPercentage || 0,
+        taxAmount: milestone.taxAmount || 0,
+        totalWithTax: milestone.totalWithTax || milestone.amount
       }
     });
   } catch (error) {
+    console.error("Error in downloadInvoice:", error);
     return res.status(500).json({ success: false, message: "Server error" });
   }
 };
@@ -669,6 +724,8 @@ const updatePaymentInfo = async (req, res) => {
     }
 
     console.log("Saving batch...");
+    milestone.markModified('invoiceDownloads');
+    batch.markModified('milestones');
     await batch.save();
     console.log("Batch saved successfully");
 

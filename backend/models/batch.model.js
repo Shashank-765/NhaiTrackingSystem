@@ -97,6 +97,23 @@ const batchSchema = new mongoose.Schema(
         completedAt: {
           type: Date
         },
+        // Tax calculation fields for invoice download
+        taxApplied: {
+          type: Boolean,
+          default: false
+        },
+        taxPercentage: {
+          type: Number,
+          default: 0
+        },
+        taxAmount: {
+          type: Number,
+          default: 0
+        },
+        totalWithTax: {
+          type: Number,
+          default: 0
+        },
         invoiceDownloads: {
           admin: {
             downloaded: {
