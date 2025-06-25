@@ -616,7 +616,6 @@ const [userTotalPages, setUserTotalPages] = useState(1);
           </table>
           <div className="pagination-controls" style={{ 
             display: 'flex', 
-            justifyContent: 'center', 
             alignItems: 'center', 
             marginTop: '20px',
             justifyContent: 'right',
@@ -730,7 +729,6 @@ const [userTotalPages, setUserTotalPages] = useState(1);
             justifyContent: 'center', 
             alignItems: 'center', 
             marginTop: '20px',
-            justifyContent: 'right',
             gap: '10px'
           }}>
             <button 
