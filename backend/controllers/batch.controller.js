@@ -470,7 +470,7 @@ const downloadInvoice = async (req, res) => {
     console.log("Download Invoice API called");
     const batch = await Batch.findById(req.params.id);
     const { role } = req.user || {};
-    const { milestoneIndex } = req.body;
+    const milestoneIndex = req.body.milestoneIndex ?? req.query.milestoneIndex;
 
     console.log("milestoneIndex from request:", milestoneIndex);
 
@@ -478,7 +478,7 @@ const downloadInvoice = async (req, res) => {
       console.log("Batch not found");
       return res.status(404).json({ success: false, message: "Batch not found" });
     }
-    if (!batch.milestones[milestoneIndex]) {
+    if (milestoneIndex === undefined || !batch.milestones[milestoneIndex]) {
       console.log("Invalid milestone index");
       return res.status(400).json({ success: false, message: "Invalid milestone index" });
     }
@@ -558,11 +558,14 @@ const downloadInvoice = async (req, res) => {
       return res.status(403).json({ success: false, message: "Unauthorized role" });
     }
 
-    console.log("Before save - milestone.invoiceDownloads:", JSON.stringify(milestone.invoiceDownloads, null, 2));
-    milestone.markModified('invoiceDownloads');
+    // Mark only the selected milestone as modified
+    batch.markModified(`milestones.${milestoneIndex}.invoiceDownloads`);
+    batch.markModified(`milestones.${milestoneIndex}.taxApplied`);
+    batch.markModified(`milestones.${milestoneIndex}.taxPercentage`);
+    batch.markModified(`milestones.${milestoneIndex}.taxAmount`);
+    batch.markModified(`milestones.${milestoneIndex}.totalWithTax`);
     batch.markModified('milestones');
     await batch.save();
-    console.log("After save - milestone.invoiceDownloads:", JSON.stringify(milestone.invoiceDownloads, null, 2));
 
     // Send notification
     const timestamp = new Date();
@@ -574,7 +577,6 @@ const downloadInvoice = async (req, res) => {
       contractorName: contractorName,
       contractTitle: batch.contractTitle,
       timestamp: timestamp.toISOString(),
-      // downloadedBy: isAdmin ? 'admin' : 'contractor'
     });
 
     return res.status(200).json({
@@ -593,7 +595,7 @@ const downloadInvoice = async (req, res) => {
     });
   } catch (error) {
     console.error("Error in downloadInvoice:", error);
-    return res.status(500).json({ success: false, message: "Server error" });
+    return res.status(500).json({ success: false, message: "Server error", error: error.message });
   }
 };
 

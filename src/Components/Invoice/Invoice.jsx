@@ -37,9 +37,9 @@ const Invoice = ({ batch, onDownloadSuccess = () => {}, selectedMilestone: propS
     return total + (milestone.workStatus === 'completed' ? (milestone.amount || 0) : 0);
   }, 0) || 0;
   
-  // Find the correct milestone index in the original batch
-  const selectedMilestone = propSelectedMilestone || (milestonesToShow && milestonesToShow.length > 0 ? milestonesToShow[0] : batch.milestones[0]);
-  const milestoneIndex = batch.milestones?.findIndex(m => m._id === selectedMilestone._id) || 0;
+  // Use the selectedMilestone prop if provided, else fallback
+  const selectedMilestone = propSelectedMilestone || batch.milestones[0];
+  const milestoneIndex = batch.milestones.findIndex(m => m._id === selectedMilestone._id);
   let milestone = selectedMilestone;
   const adminDownloaded = milestone?.invoiceDownloads?.admin?.downloaded;
   const contractorDownloaded = milestone?.invoiceDownloads?.contractor?.downloaded;

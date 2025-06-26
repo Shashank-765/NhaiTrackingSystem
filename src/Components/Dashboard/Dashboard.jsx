@@ -377,16 +377,16 @@ const [userTotalPages, setUserTotalPages] = useState(1);
     fetchBatches();
   }, [refreshTrigger, currentPage,userPage]);
 
-  // Function to handle invoice click ----- commented out for now
+  // Function to handle invoice click
   const handleInvoiceClick = (batch) => {
-    // Get the selected milestone index for this batch
     const selectedMilestoneIndex = selectedMilestoneIndices[batch._id] || 0;
     const selectedMilestone = batch.milestones?.[selectedMilestoneIndex];
-    
-    if (selectedMilestone?.workApproved && 
-        selectedMilestone?.workStatus === "completed" && 
-        selectedMilestone?.agencytoNhai?.[0]?.agencytoNhaiPaymentStatus === 'completed') {
-      setSelectedInvoice(batch);
+    if (
+      selectedMilestone?.workApproved &&
+      selectedMilestone?.workStatus === "completed" &&
+      selectedMilestone?.agencytoNhai?.[0]?.agencytoNhaiPaymentStatus === 'completed'
+    ) {
+      setSelectedInvoice({ batch, selectedMilestone });
     } else {
       toast.warning(
         "Invoice is only available after work is completed and approved and payment is done by agency."
@@ -829,7 +829,7 @@ const [userTotalPages, setUserTotalPages] = useState(1);
             >
               Close
             </button>
-            <Invoice batch={selectedInvoice} />
+            <Invoice batch={selectedInvoice.batch} selectedMilestone={selectedInvoice.selectedMilestone} />
           </div>
         </div>
       )}
